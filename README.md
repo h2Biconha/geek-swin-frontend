@@ -46,6 +46,7 @@ docs/GUIA-NEXTJS.md       guia de uso do front (como adicionar peça, trocar fot
 |---|---|---|
 | Catálogo e preços | `src/lib/catalog.json` | servir via API ou CMS |
 | Estoque ("Restam 37 de 150") | número fixo no JSON | estoque real, baixa a cada venda paga |
+| Pré-venda do drop | `src/lib/presale.ts` + `drop.presale` / `drop.shipsFrom` no JSON | reserva, número da peça, envio a partir da data, estorno (BACKEND.md) |
 | Cadastro de e-mail (popup, rodapé, /drops) | `src/lib/subscribe.ts` finge sucesso | salvar com consentimento (LGPD) |
 | Bag | `localStorage` no navegador | carrinho no servidor ao iniciar o checkout |
 | Checkout | botão "Finalizar compra" desligado em `src/components/CartView.tsx` | pagamento (Pix, cartão parcelado) |

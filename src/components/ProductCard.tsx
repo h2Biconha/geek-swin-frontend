@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { brl, discount, img, installment, type Product } from "@/lib/products";
+import { brl, discount, DROP, img, installment, type Product } from "@/lib/products";
+import { isPresaleItem, OPENS_LABEL, usePresaleOpen } from "@/lib/presale";
 import { cardReveal, EASE_LUX, lineReveal, mediaReveal } from "@/lib/motion";
 
 /**
@@ -13,6 +14,7 @@ import { cardReveal, EASE_LUX, lineReveal, mediaReveal } from "@/lib/motion";
  */
 export default function ProductCard({ product: p, priority = false, animateIn = false }: { product: Product; priority?: boolean; animateIn?: boolean }) {
   const off = discount(p);
+  const presale = usePresaleOpen();
   const badge = off ? `-${off}%` : p.badge;
   const stockPct = p.edition && p.stockLeft !== undefined ? (p.stockLeft / p.edition) * 100 : null;
 
@@ -83,9 +85,17 @@ export default function ProductCard({ product: p, priority = false, animateIn = 
               <span className="mt-2 block font-mono text-micro uppercase tracking-[0.14em] tabular-nums text-acid-ink">
                 Restam {p.stockLeft} de {p.edition}
               </span>
+              {isPresaleItem(p, presale) && (
+                <span className="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre {OPENS_LABEL}</span>
+              )}
             </>
           ) : (
-            <span className="block font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente</span>
+            <>
+              <span className="block font-mono text-micro uppercase tracking-[0.14em] text-muted">{p.drop ? `Drop ${DROP.number} · ${DROP.name}` : "Linha permanente"}</span>
+              {isPresaleItem(p, presale) && (
+                <span className="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre {OPENS_LABEL}</span>
+              )}
+            </>
           )}
         </motion.div>
       </Link>

@@ -128,3 +128,6 @@ Erro comum: colocar `initial`/`animate` nos filhos. Isso quebra a herança e o s
 ## Trocar placeholders por fotos
 Coloque `hoodie.webp` em `public/products/` e mude `image` da peça em `src/lib/catalog.json`.
 Foto recomendada: 1600×2000 (4:5), fundo neutro claro (#E9E9E4) ou recorte PNG/WebP transparente, sombra suave no chão. Para os modelos, troque `modelImage` (hover do card) e `image` em `looks`. `next/image` otimiza sozinho.
+
+## Pré-venda do drop
+Antes de `drop.opensAtUTC`, as peças com `drop: true` aparecem como pré-venda (card, página da peça, bag e FAQ) com envio a partir de `drop.shipsFrom`. O relógio é conferido no navegador (`src/lib/presale.ts`), então os avisos somem sozinhos quando o drop abre, sem precisar de novo build. Para desligar a pré-venda, use `"presale": false` no `catalog.json`.

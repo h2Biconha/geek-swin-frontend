@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { BigTitle, Breadcrumb } from "@/components/ui";
+import { DROP, OPENS_LABEL, SHIPS_FROM_LABEL } from "@/lib/products";
 
 export const metadata: Metadata = { title: "Sobre", description: "Sobre a GEEK SWIN, perguntas frequentes e contato." };
 
@@ -10,6 +11,7 @@ const VALUES = [
   ["Drop culture", "Tiragens numeradas e sem reposição. Quando acaba, vira arquivo."],
 ];
 const FAQ = [
+  ["Como funciona a pré-venda?", `Até ${OPENS_LABEL}, as peças do Drop ${DROP.number} são vendidas na pré-venda: você paga agora, garante o número da sua peça e o envio começa a partir de ${SHIPS_FROM_LABEL}. Se desistir antes do envio, devolvemos o valor integral.`],
   ["Quando meu pedido chega?", "Postamos em até 2 dias úteis. Capitais do Sudeste recebem em 2 a 4 dias úteis; o restante do Brasil, em 4 a 9."],
   ["Como funciona a troca?", "Você tem 30 dias. A primeira troca é por nossa conta, desde que a etiqueta e o lacre de numeração estejam intactos."],
   ["Qual tamanho eu escolho?", "Nossa modelagem é oversized. Se gosta de caimento justo, peça um número abaixo. Cada página de produto tem a tabela com as medidas da peça."],

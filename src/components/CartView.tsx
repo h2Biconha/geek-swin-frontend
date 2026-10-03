@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { cart, countItems, subtotal, useCart } from "@/lib/cart";
 import { brl, FREE_SHIPPING_FROM, getProduct, img, installment, pix, EDITION_TOTAL } from "@/lib/products";
+import { isPresaleItem, OPENS_LABEL, SHIPS_FROM_LABEL, usePresaleOpen } from "@/lib/presale";
 
 export default function CartView() {
+  const presaleOpen = usePresaleOpen();
   const items = useCart();
   const [note, setNote] = useState(false);
   const sub = subtotal(items);
@@ -49,6 +51,9 @@ export default function CartView() {
                     Tamanho {i.size}
                     {p.edition ? ` · Nº ${p.number} / ${p.edition}` : ""}
                   </p>
+                  {isPresaleItem(p, presaleOpen) && (
+                    <p className="mt-1 font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Pré-venda · envio a partir de {SHIPS_FROM_LABEL}</p>
+                  )}
                   <div className="mt-4 flex flex-wrap items-center gap-4">
                     <div className="inline-flex items-center rounded-full border border-line/15">
                       <button type="button" aria-label="Diminuir quantidade" onClick={() => cart.setQty(i.slug, i.size, i.qty - 1)} className="grid size-9 place-items-center">
@@ -97,6 +102,11 @@ export default function CartView() {
           </dl>
           <p className="mt-1 text-right text-sm tabular-nums text-muted">ou 6x de {installment(sub)} sem juros</p>
           <p className="text-right text-sm font-medium tabular-nums">{pix(sub)} no Pix (5% off)</p>
+          {items.some((i) => isPresaleItem(getProduct(i.slug)!, presaleOpen)) && (
+            <p className="mt-6 rounded-2xl border border-line/15 p-4 text-sm text-muted">
+              Sua bag tem peças em pré-venda. O drop abre {OPENS_LABEL} e o pedido inteiro é enviado a partir de {SHIPS_FROM_LABEL}.
+            </p>
+          )}
           <button type="button" onClick={() => setNote(true)} className="mt-8 w-full rounded-full bg-invert px-7 py-4 font-mono text-label font-bold uppercase tracking-[0.16em] text-on-invert transition-colors duration-500 hover:bg-acid hover:text-on-acid">
             Finalizar compra
           </button>

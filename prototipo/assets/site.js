@@ -66,6 +66,13 @@
 
   /* ---------- Contagem regressiva (popup e página de drops) ---------- */
   var END = Date.parse(C.drop.opensAtUTC);
+  /* ---------- Pré-venda: avisos [data-presale] só até a abertura do drop ---------- */
+  var PRESALE = !!C.drop.presale && Date.now() < END;
+  var SHIPS = C.drop.shipsFrom.split('-').slice(1).reverse().join('/');
+  if (!PRESALE) {
+    $$('[data-presale]').forEach(function (el) { el.hidden = true; });
+    $$('[data-after-open]').forEach(function (el) { el.hidden = false; });
+  }
   function tick() {
     var t = Math.max(0, END - Date.now()), v = { d: t / 864e5, h: t / 36e5 % 24, m: t / 6e4 % 60, s: t / 1e3 % 60 };
     $$('[data-cd]').forEach(function (el) { el.textContent = String(Math.floor(v[el.dataset.cd])).padStart(2, '0'); });
@@ -180,6 +187,7 @@
           '<a href="produto-' + p.slug + '.html" class="studio block aspect-[4/5] rounded-2xl" aria-hidden="true" tabindex="-1"><img src="products/' + p.image + '" alt=""></a>' +
           '<div class="min-w-0"><a href="produto-' + p.slug + '.html" class="font-display text-lg font-bold leading-tight hover:text-acid-ink">' + p.name + '</a>' +
           '<p class="mt-1 font-mono text-micro uppercase tracking-[0.14em] text-muted">Tamanho ' + i.size + (p.drop && p.edition ? ' · Nº ' + p.number + ' / ' + p.edition : '') + '</p>' +
+          (PRESALE && p.drop ? '<p class="mt-1 font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Pré-venda · envio a partir de ' + SHIPS + '</p>' : '') +
           '<div class="mt-4 inline-flex items-center rounded-full border border-line">' +
           '<button type="button" class="grid size-9 place-items-center" data-q="-1" data-slug="' + p.slug + '" data-size="' + i.size + '" aria-label="Diminuir quantidade">−</button>' +
           '<span class="tick w-8 text-center font-mono text-sm" aria-live="polite">' + i.qty + '</span>' +
@@ -187,6 +195,7 @@
           '<button type="button" aria-label="Remover ' + p.name + ', tamanho ' + i.size + '" class="ml-4 py-3 font-mono text-micro uppercase tracking-[0.14em] text-muted underline underline-offset-4 hover:text-ink" data-remove data-slug="' + p.slug + '" data-size="' + i.size + '">Remover</button></div>' +
           '<div class="tick text-right font-display text-lg font-bold">' + brl(p.price * i.qty) + '</div></li>';
       }).join('');
+      $('#bag-presale').hidden = !(PRESALE && items.some(function (i) { return bySlug[i.slug].drop; }));
       $('#bag-sub').textContent = brl(sub);
       $('#bag-ship').textContent = missing === 0 ? 'Grátis' : 'Calculado no checkout';
       $('#bag-total').textContent = brl(sub);

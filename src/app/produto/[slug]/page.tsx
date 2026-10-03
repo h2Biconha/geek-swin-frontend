@@ -4,7 +4,7 @@ import BuyBox from "@/components/BuyBox";
 import ProductGallery from "@/components/ProductGallery";
 import ProductGrid from "@/components/ProductGrid";
 import { Breadcrumb, SectionHead } from "@/components/ui";
-import { brl, categoryName, DROP, getProduct, installment, pix, PRODUCTS, related, SIZE_TABLES } from "@/lib/products";
+import { brl, categoryName, DROP, getProduct, installment, OPENS_LABEL, pix, PRODUCTS, related, SHIPS_FROM_LABEL, SIZE_TABLES } from "@/lib/products";
 
 // Uma página estática por peça do catálogo, gerada no build. Slug desconhecido = 404.
 export function generateStaticParams() {
@@ -28,7 +28,9 @@ export default async function ProductPage({ params }: Props) {
   const p = getProduct((await params).slug);
   if (!p) notFound();
   const table = SIZE_TABLES[p.sizeTable];
-  const kicker = p.edition ? `Drop ${DROP.number} · ${DROP.name} · Nº ${p.number} / ${p.edition}` : `Linha permanente · Nº ${p.number}`;
+  const kicker = p.edition ? `Drop ${DROP.number} · ${DROP.name} · Nº ${p.number} / ${p.edition}` : p.drop
+    ? `Drop ${DROP.number} · ${DROP.name} · Nº ${p.number}`
+    : `Linha permanente · Nº ${p.number}`;
 
   return (
     <>
@@ -70,7 +72,7 @@ export default async function ProductPage({ params }: Props) {
                   </div>
                 </div>
               ) : (
-                <p className="font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente · volta ao estoque sempre</p>
+                <p className="font-mono text-micro uppercase tracking-[0.14em] text-muted">{p.drop ? `Drop ${DROP.number} · enquanto durar o estoque` : "Linha permanente · volta ao estoque sempre"}</p>
               )}
 
               <BuyBox product={p} priceLabel={brl(p.price)} />
@@ -117,7 +119,10 @@ export default async function ProductPage({ params }: Props) {
                 </Acc>
                 <Acc title="Cuidados">Lave do avesso em água fria, com cores parecidas. Não use alvejante. Seque à sombra e passe em temperatura baixa, sem passar sobre a estampa.</Acc>
                 <Acc title="Envio e trocas" last>
-                  Envio em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.
+                  {p.drop
+                    ? `Peça do Drop ${DROP.number}: comprando na pré-venda (até ${OPENS_LABEL}), o envio é a partir de ${SHIPS_FROM_LABEL}. Depois da abertura, em até 2 dias úteis após a confirmação.`
+                    : "Envio em até 2 dias úteis após a confirmação."}{" "}
+                  Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.
                 </Acc>
               </div>
             </div>

@@ -17,7 +17,23 @@ Os contratos abaixo servem para os dois casos: no 1, as rotas `/api/*` do Next v
 - Valores em **centavos inteiros** no back (`38990`, não `389.9`). O front hoje usa reais com casas decimais e converte.
 - Parcelamento: 6x sem juros, parcela = `floor(total_em_centavos / 6)`. Pix: 5% de desconto. Frete grátis a partir de R$ 349,00. Hoje esses números estão em `catalog.json` (`installments`, `pixDiscount`, `freeShippingFrom`).
 - Peças do drop são numeradas (`edition`) e **sem reposição**: estoque zerado é definitivo.
-- Drop abre em `drop.opensAtUTC` (`2026-10-10T23:00:00Z`, 20h de Brasília). **Decisão em aberto:** antes disso o produto pode ser comprado (pré-venda) ou fica bloqueado? Hoje o front deixa adicionar à bag.
+- Drop abre em `drop.opensAtUTC` (`2026-10-10T23:00:00Z`, 20h de Brasília). **Antes disso as peças do drop são vendidas em pré-venda** (decisão do Henrique, 03/10/2026). Regras na seção "Pré-venda" abaixo.
+
+## Pré-venda (decidido)
+
+Antes de `drop.opensAtUTC`, quem compra uma peça do drop (`drop: true`) está comprando na pré-venda. O front já mostra isso no card, na página do produto e na bag, e esconde os avisos sozinho quando o drop abre. As datas ficam no `catalog.json` em `drop.presale` (liga/desliga) e `drop.shipsFrom` (`2026-10-14`, **data provisória, confirme com o Henrique**).
+
+O que o back precisa garantir:
+
+1. **Estoque:** a pré-venda consome a mesma tiragem numerada. Peça vendida na pré-venda é peça a menos no dia do drop, e o número (ex.: 037/150) é atribuído no pagamento confirmado, em ordem.
+2. **Reserva:** igual ao checkout normal (reserva curta durante o pagamento e baixa definitiva no webhook de pago). Nunca venda acima de `edition`.
+3. **Pagamento:** cobrado na hora (Pix ou cartão). Guarde no pedido `presale: true` e `ships_from`.
+4. **Envio:** pedido com qualquer item de pré-venda sai inteiro a partir de `shipsFrom` (é o que o texto da bag promete). Se preferir enviar separado, mude o texto em `src/components/CartView.tsx`.
+5. **E-mails:** confirmação dizendo que é pré-venda e a data de envio, e um aviso quando o pedido for postado.
+6. **Cancelamento e estorno:** o site promete reembolso integral para quem desistir antes do envio (FAQ em `/sobre`). Depois de receber, vale o direito de arrependimento de 7 dias do CDC. Estorno pelo mesmo meio de pagamento; Pix devolvido via API do gateway.
+7. **Atraso:** se o envio passar de `shipsFrom`, avise o cliente e ofereça o cancelamento com estorno. Trate o caso como regra de negócio, não como exceção.
+
+No contrato do checkout, a resposta inclui `"presale": true` e `"shipsFrom": "2026-10-14"` quando houver item de pré-venda.
 
 ## Modelo de dados (mínimo)
 
@@ -25,7 +41,7 @@ Os contratos abaixo servem para os dois casos: no 1, as rotas `/api/*` do Next v
 Product   slug (PK), number, name, category, price_cents, compare_at_cents?, badge?, specs,
           image, model_image, drop (bool), edition?, size_table, description, fabric[], model_note
 Stock     product_slug, size, qty                 -- soldOut = qty 0
-Order     id, status (pending|paid|canceled|shipped), email, cep, items[], subtotal_cents,
+Order     id, status (pending|paid|canceled|shipped|refunded), presale (bool), ships_from?, email, cep, items[], subtotal_cents,
           shipping_cents, discount_cents, total_cents, payment_method, created_at
 Reservation  product_slug, size, qty, order_id, expires_at   -- segura a peça durante o pagamento
 Subscriber   email (unique), source, consent_at, ip, unsubscribed_at?
@@ -100,7 +116,8 @@ A regra de grátis acima de R$ 349 é aplicada aqui, no servidor.
 O servidor: valida itens e estoque, recalcula preço, frete e desconto Pix, cria o `Order` como `pending`, reserva as peças (sugestão: 10 minutos) e cria o pagamento no gateway.
 
 ```json
-{ "orderId": "ord_123", "total": 370.41, "checkoutUrl": "https://gateway.exemplo/pagar/abc" }
+{ "orderId": "ord_123", "total": 370.41, "presale": true, "shipsFrom": "2026-10-14",
+  "checkoutUrl": "https://gateway.exemplo/pagar/abc" }
 ```
 
 Erros: `409 { "error": "sem_estoque", "items": [{ "slug": "...", "size": "P", "available": 0 }] }` (o front avisa e remove da bag) · `400` dados inválidos.
@@ -119,6 +136,7 @@ Erros: `409 { "error": "sem_estoque", "items": [{ "slug": "...", "size": "P", "a
 | `src/lib/products.ts` + `src/lib/catalog.json` | importa o JSON | buscar `/api/products` no servidor (com `revalidate`) |
 | `src/components/BuyBox.tsx` | usa `soldOut` e `stockLeft` do JSON | consultar `/api/stock` ao abrir a página |
 | `src/components/CartView.tsx` | botão "Finalizar compra" desligado, frete "Calculado no checkout" | campo de CEP com `/api/shipping/quote` e botão chamando `/api/checkout`, redirecionando para `checkoutUrl` |
+| `src/lib/presale.ts` | pré-venda decidida pelo relógio do navegador | pode continuar; o servidor decide de verdade se o item é pré-venda no checkout |
 | `src/lib/cart.ts` | bag só no `localStorage` | pode continuar assim; o servidor valida tudo no checkout |
 
 ## Segurança e variáveis

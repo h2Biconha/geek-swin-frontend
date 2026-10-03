@@ -55,7 +55,7 @@
       <div class="lg:col-span-5">
         <div class="flex flex-col gap-7 lg:sticky lg:top-32">
           <div class="fade-in-fast">
-            <p class="font-mono text-micro uppercase tracking-[0.16em] text-muted">Linha permanente · Nº 004</p>
+            <p class="font-mono text-micro uppercase tracking-[0.16em] text-muted">Drop 001 · Genesis · Nº 004</p>
             <h1 class="mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-extrabold leading-[0.95] tracking-[-0.03em]">Lag Zero Socks · 3 pares</h1>
             <p class="mt-2 font-mono text-micro uppercase tracking-[0.14em] text-muted">Cano alto · Felpa no pé</p>
           </div>
@@ -63,7 +63,7 @@
             <div class="flex flex-wrap items-baseline gap-x-3"><span class="tick font-display text-3xl font-extrabold">R$ 69,90</span><span class="tick font-mono text-sm text-muted line-through">R$ 89,90</span></div>
             <p class="tick mt-1 text-sm text-muted">ou 6x de R$ 11,65 sem juros · <strong class="font-medium text-ink">R$ 66,41 no Pix</strong></p>
           </div>
-          <p class="font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente · volta ao estoque sempre</p>
+          <p class="font-mono text-micro uppercase tracking-[0.14em] text-muted">Drop 001 · enquanto durar o estoque</p>
           <div id="sizes">
             <div class="mb-3 flex items-center justify-between font-mono text-micro uppercase tracking-[0.14em]"><span>Tamanho: <strong id="size-chosen" class="text-ink">escolha</strong></span><a href="#medidas" class="text-muted underline underline-offset-4 hover:text-ink" onclick="document.getElementById('medidas').open=true">Guia de medidas</a></div>
             <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Tamanho"><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="38-40">38-40</button><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="41-43">41-43</button><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="44-46">44-46</button></div>
@@ -71,8 +71,9 @@
             <p class="mt-3 text-xs text-muted">Escolha pela numeração do seu calçado.</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
+            <div data-presale class="sm:col-span-2 rounded-2xl border border-line bg-surface p-4 text-sm"><p class="font-mono text-micro font-bold uppercase tracking-[0.16em] text-acid-ink">Pré-venda</p><p class="mt-1 text-muted">Garanta a sua peça numerada agora. O drop abre 10/10 às 20h e o envio começa a partir de 14/10.</p></div>
             <button id="main-add" type="button" data-add class="btn-ink">Adicionar à bag</button>
-            <button type="button" data-buy class="btn-line">Comprar agora</button>
+            <button type="button" data-buy class="btn-line"><span data-presale>Comprar na pré-venda</span><span data-after-open hidden>Comprar agora</span></button>
           </div>
           <ul class="grid gap-2 text-sm text-muted">
             <li>✦ Frete grátis acima de R$ 349</li><li>✦ Troca grátis em 30 dias</li><li>✦ Envio em até 2 dias úteis</li>
@@ -82,7 +83,7 @@
             <details class="acc"><summary>Tecido e tecnologia</summary><div class="acc-body"><ul class="grid gap-1.5"><li>· 80% algodão, 18% poliamida, 2% elastano</li><li>· Sola felpuda que amortece</li><li>· Punho com elástico que não marca</li><li>· Calcanhar e ponta reforçados</li></ul></div></details>
             <details class="acc" id="medidas"><summary>Tabela de medidas</summary><div class="acc-body"><p class="mb-3 text-xs">Numeração do calçado</p><div class="overflow-x-auto"><table class="size-table"><thead><tr><th>Tamanho</th><th>Calçado</th><th>Cano</th></tr></thead><tbody><tr><td>38-40</td><td>38 a 40</td><td>18 cm</td></tr><tr><td>41-43</td><td>41 a 43</td><td>19 cm</td></tr><tr><td>44-46</td><td>44 a 46</td><td>20 cm</td></tr></tbody></table></div></div></details>
             <details class="acc"><summary>Cuidados</summary><div class="acc-body">Lave do avesso em água fria, com cores parecidas. Não use alvejante. Seque à sombra e passe em temperatura baixa, sem passar sobre a estampa.</div></details>
-            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">Envio em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
+            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">Peça do Drop 001: comprando na pré-venda (até 10/10 às 20h), o envio é a partir de 14/10. Depois da abertura, em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
           </div>
         </div>
       </div>
@@ -106,7 +107,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Sarja 6 gomos · Aba curva</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 149,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 24,98 sem juros</p>
-          <div class="mt-4"><div class="stock"><i style="width:32%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 64 de 200</span></div>
+          <div class="mt-4"><div class="stock"><i style="width:32%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 64 de 200</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span></div>
         </a>
       </article>
 <article class="card" data-cursor="view" data-cat="camisetas" data-price="129.9" data-order="1">
@@ -138,7 +139,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Moletom 520 g/m² · Oversized</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 389,90</span><span class="tick font-mono text-label text-muted line-through">R$ 449,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 64,98 sem juros</p>
-          <div class="mt-4"><div class="stock"><i style="width:25%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 37 de 150</span></div>
+          <div class="mt-4"><div class="stock"><i style="width:25%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 37 de 150</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span></div>
         </a>
       </article>
 <article class="card" data-cursor="view" data-cat="camisetas" data-price="179.9" data-order="3">
@@ -154,7 +155,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Algodão 280 g/m² · Boxy</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 179,90</span><span class="tick font-mono text-label text-muted line-through">R$ 199,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 29,98 sem juros</p>
-          <div class="mt-4"><div class="stock"><i style="width:37%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 112 de 300</span></div>
+          <div class="mt-4"><div class="stock"><i style="width:37%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 112 de 300</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span></div>
         </a>
       </article></div>
   </section>

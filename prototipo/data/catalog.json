@@ -1,5 +1,5 @@
 {
-  "drop": { "name": "Genesis", "number": "001", "opensAtUTC": "2026-10-10T23:00:00Z" },
+  "drop": { "name": "Genesis", "number": "001", "opensAtUTC": "2026-10-10T23:00:00Z", "presale": true, "shipsFrom": "2026-10-14" },
   "freeShippingFrom": 349,
   "installments": 6,
   "pixDiscount": 0.05,

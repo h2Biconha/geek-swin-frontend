@@ -71,8 +71,9 @@
             <p class="mt-3 text-xs text-muted">O modelo tem 1,82 m e veste G.</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
+            <div data-presale class="sm:col-span-2 rounded-2xl border border-line bg-surface p-4 text-sm"><p class="font-mono text-micro font-bold uppercase tracking-[0.16em] text-acid-ink">Pré-venda</p><p class="mt-1 text-muted">Garanta a sua peça numerada agora. O drop abre 10/10 às 20h e o envio começa a partir de 14/10.</p></div>
             <button id="main-add" type="button" data-add class="btn-ink">Adicionar à bag</button>
-            <button type="button" data-buy class="btn-line">Comprar agora</button>
+            <button type="button" data-buy class="btn-line"><span data-presale>Comprar na pré-venda</span><span data-after-open hidden>Comprar agora</span></button>
           </div>
           <ul class="grid gap-2 text-sm text-muted">
             <li>✦ Frete grátis acima de R$ 349</li><li>✦ Troca grátis em 30 dias</li><li>✦ Peça numerada com certificado e QR</li>
@@ -82,7 +83,7 @@
             <details class="acc"><summary>Tecido e tecnologia</summary><div class="acc-body"><ul class="grid gap-1.5"><li>· Moletom 520 g/m², 100% algodão penteado</li><li>· VoidBlack™: tingimento que não desbota depois de 50 lavagens</li><li>· Capuz forrado duplo e cordão chato</li><li>· Bolso canguru com reforço nas pontas</li></ul></div></details>
             <details class="acc" id="medidas"><summary>Tabela de medidas</summary><div class="acc-body"><p class="mb-3 text-xs">Medidas da peça (cm), modelagem oversized</p><div class="overflow-x-auto"><table class="size-table"><thead><tr><th>Tamanho</th><th>Largura</th><th>Comprimento</th><th>Manga</th></tr></thead><tbody><tr><td>P</td><td>58</td><td>72</td><td>24</td></tr><tr><td>M</td><td>61</td><td>74</td><td>25</td></tr><tr><td>G</td><td>64</td><td>76</td><td>26</td></tr><tr><td>GG</td><td>67</td><td>78</td><td>27</td></tr><tr><td>XG</td><td>70</td><td>80</td><td>28</td></tr></tbody></table></div></div></details>
             <details class="acc"><summary>Cuidados</summary><div class="acc-body">Lave do avesso em água fria, com cores parecidas. Não use alvejante. Seque à sombra e passe em temperatura baixa, sem passar sobre a estampa.</div></details>
-            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">Envio em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
+            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">Peça do Drop 001: comprando na pré-venda (até 10/10 às 20h), o envio é a partir de 14/10. Depois da abertura, em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
           </div>
         </div>
       </div>
@@ -106,7 +107,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Sarja 300 g/m² · Wide leg</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 259,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 43,31 sem juros</p>
-          <div class="mt-4"><div class="stock"><i style="width:40%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 80 de 200</span></div>
+          <div class="mt-4"><div class="stock"><i style="width:40%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 80 de 200</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span></div>
         </a>
       </article>
 <article class="card" data-cursor="view" data-cat="camisetas" data-price="179.9" data-order="1">
@@ -122,7 +123,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Algodão 280 g/m² · Boxy</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 179,90</span><span class="tick font-mono text-label text-muted line-through">R$ 199,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 29,98 sem juros</p>
-          <div class="mt-4"><div class="stock"><i style="width:37%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 112 de 300</span></div>
+          <div class="mt-4"><div class="stock"><i style="width:37%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 112 de 300</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span></div>
         </a>
       </article>
 <article class="card" data-cursor="view" data-cat="acessorios" data-price="149.9" data-order="2">
@@ -138,7 +139,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Sarja 6 gomos · Aba curva</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 149,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 24,98 sem juros</p>
-          <div class="mt-4"><div class="stock"><i style="width:32%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 64 de 200</span></div>
+          <div class="mt-4"><div class="stock"><i style="width:32%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 64 de 200</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span></div>
         </a>
       </article>
 <article class="card" data-cursor="view" data-cat="acessorios" data-price="69.9" data-order="3">
@@ -154,7 +155,7 @@
           <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Cano alto · Felpa no pé</p>
           <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 69,90</span><span class="tick font-mono text-label text-muted line-through">R$ 89,90</span></div>
           <p class="tick text-small text-muted">ou 6x de R$ 11,65 sem juros</p>
-          <span class="mt-4 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente</span>
+          <span class="mt-4 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Drop 001 · Genesis</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre 10/10 às 20h</span>
         </a>
       </article></div>
   </section>

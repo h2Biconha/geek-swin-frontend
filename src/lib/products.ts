@@ -36,6 +36,18 @@ export const CATEGORIES = catalog.categories;
 export const SIZE_TABLES = catalog.sizeTables as Record<string, SizeTable>;
 export const DROP = catalog.drop;
 export const DROP_OPENS_AT = Date.parse(catalog.drop.opensAtUTC);
+
+// rótulos de data da pré-venda (horário de Brasília)
+const ddmm = (iso: string) => {
+  const [, m, d] = iso.split("-");
+  return `${d}/${m}`;
+};
+const BRT = { timeZone: "America/Sao_Paulo" } as const;
+const opens = new Date(DROP_OPENS_AT);
+// "10/10 às 20h", sempre no horário de Brasília, calculado de DROP.opensAtUTC
+export const OPENS_LABEL = `${opens.toLocaleDateString("pt-BR", { ...BRT, day: "2-digit", month: "2-digit" })} às ${opens.toLocaleTimeString("pt-BR", { ...BRT, hour: "numeric" })}h`;
+export const SHIPS_FROM_LABEL = ddmm(catalog.drop.shipsFrom);
+
 export const FREE_SHIPPING_FROM = catalog.freeShippingFrom;
 export const INSTALLMENTS = catalog.installments;
 export const PIX_DISCOUNT = catalog.pixDiscount;

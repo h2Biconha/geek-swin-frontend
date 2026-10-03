@@ -26,6 +26,11 @@ def inst(v):
     return brl((round(v * 100) // C["installments"]) / 100)
 
 
+# pré-venda: datas em horário de Brasília (o JS esconde os avisos [data-presale] depois da abertura)
+OPENS_LABEL = "10/10 às 20h"  # = drop.opensAtUTC 2026-10-10T23:00:00Z
+SHIPS_FROM_LABEL = "/".join(reversed(C["drop"]["shipsFrom"].split("-")[1:]))
+
+
 def discount(p):
     return round((1 - p["price"] / p["compareAt"]) * 100) if p.get("compareAt") else 0
 
@@ -203,9 +208,10 @@ def card(p, i=0):
     old = f'<span class="tick font-mono text-label text-muted line-through">{brl(p["compareAt"])}</span>' if p.get("compareAt") else ""
     if p.get("edition"):
         pct = round(p["stockLeft"] / p["edition"] * 100)
-        stock = f'<div class="mt-4"><div class="stock"><i style="width:{pct}%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam {p["stockLeft"]} de {p["edition"]}</span></div>'
+        stock = f'<div class="mt-4"><div class="stock"><i style="width:{pct}%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam {p["stockLeft"]} de {p["edition"]}</span>' + (f'<span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre {OPENS_LABEL}</span>' if p.get("drop") else "") + '</div>'
     else:
-        stock = '<span class="mt-4 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente</span>'
+        stock = (f'<span class="mt-4 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Drop {C["drop"]["number"]} · {C["drop"]["name"]}</span><span data-presale class="mt-1 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Pré-venda · abre {OPENS_LABEL}</span>' if p.get("drop")
+                 else '<span class="mt-4 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente</span>')
     return f"""<article class="card" data-cursor="view" data-cat="{p['category']}" data-price="{p['price']}" data-order="{i}">
         <a href="{url(p)}" class="block" aria-label="{e(p['name'])}, {brl(p['price'])}">
           <div class="studio aspect-[4/5] rounded-[22px]">
@@ -372,8 +378,8 @@ for p in C["products"]:
         stock = f'<div><div class="flex justify-between font-mono text-micro uppercase tracking-[0.14em]"><span class="text-acid-ink">Restam {p["stockLeft"]} de {p["edition"]}</span><span class="text-muted">Sem reposição</span></div><div class="stock mt-2"><i style="width:{pct}%"></i></div></div>'
         kicker = f"Drop {C['drop']['number']} · {C['drop']['name']} · Nº {p['number']} / {p['edition']}"
     else:
-        stock = '<p class="font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente · volta ao estoque sempre</p>'
-        kicker = f"Linha permanente · Nº {p['number']}"
+        stock = f'<p class="font-mono text-micro uppercase tracking-[0.14em] text-muted">{"Drop " + C["drop"]["number"] + " · enquanto durar o estoque" if p.get("drop") else "Linha permanente · volta ao estoque sempre"}</p>'
+        kicker = f"Drop {C['drop']['number']} · {C['drop']['name']} · Nº {p['number']}" if p.get("drop") else f"Linha permanente · Nº {p['number']}"
     rows = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in table["rows"])
     related = [P[s] for l in C["looks"] if p["slug"] in l["products"] for s in l["products"] if s != p["slug"]]
     related += [q for q in C["products"] if q["slug"] != p["slug"] and q not in related]
@@ -408,8 +414,9 @@ for p in C["products"]:
             <p class="mt-3 text-xs text-muted">{e(p['model'])}</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
+            {f'<div data-presale class="sm:col-span-2 rounded-2xl border border-line bg-surface p-4 text-sm"><p class="font-mono text-micro font-bold uppercase tracking-[0.16em] text-acid-ink">Pré-venda</p><p class="mt-1 text-muted">Garanta a sua peça numerada agora. O drop abre {OPENS_LABEL} e o envio começa a partir de {SHIPS_FROM_LABEL}.</p></div>' if p.get("drop") else ""}
             <button id="main-add" type="button" data-add class="btn-ink">Adicionar à bag</button>
-            <button type="button" data-buy class="btn-line">Comprar agora</button>
+            <button type="button" data-buy class="btn-line">{'<span data-presale>Comprar na pré-venda</span><span data-after-open hidden>Comprar agora</span>' if p.get("drop") else 'Comprar agora'}</button>
           </div>
           <ul class="grid gap-2 text-sm text-muted">
             <li>✦ Frete grátis acima de R$ 349</li><li>✦ Troca grátis em 30 dias</li><li>✦ {'Peça numerada com certificado e QR' if p.get('edition') else 'Envio em até 2 dias úteis'}</li>
@@ -419,7 +426,7 @@ for p in C["products"]:
             <details class="acc"><summary>Tecido e tecnologia</summary><div class="acc-body"><ul class="grid gap-1.5">{''.join(f'<li>· {e(f)}</li>' for f in p['fabric'])}</ul></div></details>
             <details class="acc" id="medidas"><summary>Tabela de medidas</summary><div class="acc-body"><p class="mb-3 text-xs">{table['label']}</p><div class="overflow-x-auto"><table class="size-table"><thead><tr>{''.join(f'<th>{c}</th>' for c in table['columns'])}</tr></thead><tbody>{rows}</tbody></table></div></div></details>
             <details class="acc"><summary>Cuidados</summary><div class="acc-body">Lave do avesso em água fria, com cores parecidas. Não use alvejante. Seque à sombra e passe em temperatura baixa, sem passar sobre a estampa.</div></details>
-            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">Envio em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
+            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">{f"Peça do Drop {C['drop']['number']}: comprando na pré-venda (até {OPENS_LABEL}), o envio é a partir de {SHIPS_FROM_LABEL}. Depois da abertura, em até 2 dias úteis após a confirmação." if p.get("drop") else "Envio em até 2 dias úteis após a confirmação."} Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
           </div>
         </div>
       </div>
@@ -517,7 +524,8 @@ page("drops.html", "Drops · GEEK SWIN", "Calendário de drops da GEEK SWIN e co
 
 # ---------------------------------------------------------------- SOBRE + CONTATO
 
-faq = [("Quando meu pedido chega?", "Postamos em até 2 dias úteis. Capitais do Sudeste recebem em 2 a 4 dias úteis; o restante do Brasil, em 4 a 9."),
+faq = [("Como funciona a pré-venda?", f"Até {OPENS_LABEL}, as peças do Drop {C['drop']['number']} são vendidas na pré-venda: você paga agora, garante o número da sua peça e o envio começa a partir de {SHIPS_FROM_LABEL}. Se desistir antes do envio, devolvemos o valor integral."),
+       ("Quando meu pedido chega?", "Postamos em até 2 dias úteis. Capitais do Sudeste recebem em 2 a 4 dias úteis; o restante do Brasil, em 4 a 9."),
        ("Como funciona a troca?", "Você tem 30 dias. A primeira troca é por nossa conta, desde que a etiqueta e o lacre de numeração estejam intactos."),
        ("Qual tamanho eu escolho?", "Nossa modelagem é oversized. Se gosta de caimento justo, peça um número abaixo. Cada página de produto tem a tabela com as medidas da peça."),
        ("O que é a numeração da peça?", "Cada peça de drop sai com número (ex.: 037/150) e um QR na etiqueta que confirma a autenticidade."),
@@ -584,6 +592,7 @@ bag = f"""
           </dl>
           <p id="bag-inst" class="tick mt-1 text-right text-sm text-muted"></p>
           <p id="bag-pix" class="tick text-right text-sm font-medium"></p>
+          <p id="bag-presale" hidden class="mt-6 rounded-2xl border border-line p-4 text-sm text-muted">Sua bag tem peças em pré-venda. O drop abre {OPENS_LABEL} e o pedido inteiro é enviado a partir de {SHIPS_FROM_LABEL}.</p>
           <button id="checkout" type="button" class="btn-ink mt-8 w-full">Finalizar compra</button>
           <div id="checkout-note" hidden class="mt-4 rounded-2xl border border-line p-4 text-sm text-muted" role="status">Este é um protótipo: o pagamento ainda não está ligado. Na versão real, este botão leva ao checkout (cartão, Pix e cálculo de frete).</div>
           <ul class="mt-6 grid gap-1.5 text-xs text-muted"><li>✦ Troca grátis em 30 dias</li><li>✦ Pagamento seguro · 6x sem juros · 5% off no Pix</li></ul>

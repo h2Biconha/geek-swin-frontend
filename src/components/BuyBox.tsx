@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cart } from "@/lib/cart";
 import type { Product } from "@/lib/products";
+import { isPresaleItem, OPENS_LABEL, SHIPS_FROM_LABEL, usePresaleOpen } from "@/lib/presale";
 
 /**
  * Tamanhos + botões de compra.
@@ -13,6 +14,7 @@ import type { Product } from "@/lib/products";
  */
 export default function BuyBox({ product: p, priceLabel }: { product: Product; priceLabel: string }) {
   const router = useRouter();
+  const presale = isPresaleItem(p, usePresaleOpen());
   const available = p.sizes.filter((s) => !p.soldOut.includes(s));
   const [size, setSize] = useState<string | null>(available.length === 1 ? available[0] : null);
   const [error, setError] = useState(false);
@@ -97,12 +99,21 @@ export default function BuyBox({ product: p, priceLabel }: { product: Product; p
         <p className="mt-3 text-xs text-muted">{p.model}</p>
       </div>
 
+      {presale && (
+        <div className="rounded-2xl border border-line/15 bg-surface p-4 text-sm">
+          <p className="font-mono text-micro font-bold uppercase tracking-[0.16em] text-acid-ink">Pré-venda</p>
+          <p className="mt-1 text-muted">
+            Garanta a sua peça numerada agora. O drop abre {OPENS_LABEL} e o envio começa a partir de {SHIPS_FROM_LABEL}.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <button ref={mainBtn} type="button" onClick={add} className="rounded-full bg-invert px-7 py-4 font-mono text-label font-bold uppercase tracking-[0.16em] text-on-invert transition-colors duration-500 hover:bg-acid hover:text-on-acid">
           Adicionar à bag
         </button>
         <button type="button" onClick={buy} className="rounded-full border border-ink px-7 py-4 font-mono text-label font-bold uppercase tracking-[0.16em] transition-colors duration-500 hover:bg-ink hover:text-bg">
-          Comprar agora
+          {presale ? "Comprar na pré-venda" : "Comprar agora"}
         </button>
       </div>
 
