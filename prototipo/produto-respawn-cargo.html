@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Respawn Cargo · GEEK SWIN</title>
+<meta name="description" content="Respawn Cargo: Sarja 300 g/m² · Wide leg. R$ 259,90 ou 6x sem juros.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { bg: 'var(--bg)', surface: 'var(--surface)', card: 'var(--card)', ink: 'var(--ink)', muted: 'var(--muted)', line: 'var(--line)',
+      acid: 'var(--acid)', 'acid-ink': 'var(--acid-ink)', 'on-acid': 'var(--on-acid)', invert: 'var(--invert-bg)', 'on-invert': 'var(--invert-fg)', danger: 'var(--danger)' },
+    fontSize: { micro: ['0.6875rem', { lineHeight: '1.5' }], label: ['0.75rem', { lineHeight: '1.5' }], small: ['0.8125rem', { lineHeight: '1.5' }] },
+    fontFamily: { display: ['Syne', 'Arial Black', 'sans-serif'], sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'], mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'] },
+    letterSpacing: { hud: '0.2em' } } } };
+</script>
+</head>
+<body>
+<div class="cursor" id="cursor" aria-hidden="true"><span>VER</span></div>
+<a href="#conteudo" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-acid focus:px-4 focus:py-2">Pular para o conteúdo</a>
+<header id="topbar" class="topbar">
+  <div class="overflow-hidden bg-invert py-2.5 font-mono text-micro font-medium uppercase tracking-hud text-on-invert">
+    <p class="sr-only">Frete grátis acima de R$ 349. 6x sem juros no cartão. Drop 001 · Genesis · 10/10 às 20h. 5% off no Pix. Troca grátis em 30 dias</p>
+    <div class="marquee" aria-hidden="true"><div class="flex shrink-0 gap-12 pr-12"><span>Frete grátis acima de R$ 349</span><span>✦</span><span>6x sem juros no cartão</span><span>✦</span><span>Drop 001 · Genesis · 10/10 às 20h</span><span>✦</span><span>5% off no Pix</span><span>✦</span><span>Troca grátis em 30 dias</span><span>✦</span></div><div class="flex shrink-0 gap-12 pr-12"><span>Frete grátis acima de R$ 349</span><span>✦</span><span>6x sem juros no cartão</span><span>✦</span><span>Drop 001 · Genesis · 10/10 às 20h</span><span>✦</span><span>5% off no Pix</span><span>✦</span><span>Troca grátis em 30 dias</span><span>✦</span></div></div>
+  </div>
+  <div class="site-header border-b border-line">
+    <div class="wrap header-row flex items-center justify-between gap-6">
+      <a href="index.html" class="font-display text-lg font-extrabold tracking-[0.08em]">GEEK<span class="text-acid-ink">/</span>SWIN</a>
+      <nav class="hidden gap-8 text-sm font-medium lg:flex" aria-label="Principal"><a href="loja.html" class="nav-link py-2 hover:text-acid-ink" aria-current="page">Loja</a><a href="drops.html" class="nav-link py-2 hover:text-acid-ink">Drop Genesis</a><a href="lookbook.html" class="nav-link py-2 hover:text-acid-ink">Lookbook</a><a href="loja.html#kits" class="nav-link py-2 hover:text-acid-ink">Kits</a><a href="sobre.html" class="nav-link py-2 hover:text-acid-ink">Sobre</a></nav>
+      <div class="flex items-center gap-5 font-mono text-label uppercase tracking-[0.14em]">
+        <a href="sobre.html#contato" class="hidden py-2 sm:inline">Ajuda</a>
+        <a href="carrinho.html" class="flex items-center gap-2 py-2">Bag <span class="bag-count tick grid size-5 place-items-center rounded-full bg-invert text-micro text-on-invert">0</span></a>
+        <button id="menu-btn" type="button" class="rounded-full border border-line px-4 py-2 lg:hidden" aria-expanded="false" aria-controls="mobile-nav">Menu</button>
+      </div>
+    </div>
+    <div id="mobile-nav" class="mobile-nav lg:hidden" inert><div><nav class="wrap pb-6" aria-label="Principal (celular)"><a href="loja.html" class="block border-b border-line py-4 font-display text-2xl font-bold" aria-current="page">Loja</a><a href="drops.html" class="block border-b border-line py-4 font-display text-2xl font-bold">Drop Genesis</a><a href="lookbook.html" class="block border-b border-line py-4 font-display text-2xl font-bold">Lookbook</a><a href="loja.html#kits" class="block border-b border-line py-4 font-display text-2xl font-bold">Kits</a><a href="sobre.html" class="block border-b border-line py-4 font-display text-2xl font-bold">Sobre</a></nav></div></div>
+  </div>
+</header>
+<main id="conteudo" tabindex="-1" style="outline:none">
+
+  <section id="pdp" data-slug="respawn-cargo" class="wrap pb-16 pt-8 md:pt-12">
+    <nav class="mb-6 font-mono text-micro uppercase tracking-[0.16em] text-muted" aria-label="Você está em"><a href="index.html" class="inline-block py-2 hover:text-ink">Início</a> / <a href="loja.html" class="inline-block py-2 hover:text-ink">Loja</a> / <a href="loja.html#calcas" class="inline-block py-2 hover:text-ink">Calças</a> / <span class="text-ink" aria-current="page">Respawn Cargo</span></nav>
+    <div class="grid gap-10 lg:grid-cols-12 lg:gap-12">
+      <div class="fade-in-fast lg:col-span-7">
+        <div class="gallery-main zoomable studio aspect-[4/5] rounded-[28px]" data-cursor="view"><img class="photo is-active" data-view="produto" src="products/cargo.svg" alt="Respawn Cargo, peça"><img class="photo" data-view="modelo" src="products/model-hoodie.svg" alt="Respawn Cargo, no modelo"><img class="photo detail" data-view="detalhe" src="products/cargo.svg" alt="Respawn Cargo, detalhe">
+          
+        </div>
+        <div class="mt-4 grid grid-cols-3 gap-3 sm:w-2/3"><button type="button" class="thumb studio aspect-[4/5]" data-view="produto" aria-pressed="true" aria-label="Ver peça"><img class="" src="products/cargo.svg" alt=""></button><button type="button" class="thumb studio aspect-[4/5]" data-view="modelo" aria-pressed="false" aria-label="Ver no modelo"><img class="" src="products/model-hoodie.svg" alt=""></button><button type="button" class="thumb studio aspect-[4/5]" data-view="detalhe" aria-pressed="false" aria-label="Ver detalhe"><img class="detail" src="products/cargo.svg" alt=""></button></div>
+      </div>
+
+      <div class="lg:col-span-5">
+        <div class="flex flex-col gap-7 lg:sticky lg:top-32">
+          <div class="fade-in-fast">
+            <p class="font-mono text-micro uppercase tracking-[0.16em] text-muted">Drop 001 · Genesis · Nº 006 / 200</p>
+            <h1 class="mt-3 font-display text-[clamp(2rem,3.6vw,3.2rem)] font-extrabold leading-[0.95] tracking-[-0.03em]">Respawn Cargo</h1>
+            <p class="mt-2 font-mono text-micro uppercase tracking-[0.14em] text-muted">Sarja 300 g/m² · Wide leg</p>
+          </div>
+          <div class="fade-in-fast">
+            <div class="flex flex-wrap items-baseline gap-x-3"><span class="tick font-display text-3xl font-extrabold">R$ 259,90</span></div>
+            <p class="tick mt-1 text-sm text-muted">ou 6x de R$ 43,31 sem juros · <strong class="font-medium text-ink">R$ 246,90 no Pix</strong></p>
+          </div>
+          <div><div class="flex justify-between font-mono text-micro uppercase tracking-[0.14em]"><span class="text-acid-ink">Restam 80 de 200</span><span class="text-muted">Sem reposição</span></div><div class="stock mt-2"><i style="width:40%"></i></div></div>
+          <div id="sizes">
+            <div class="mb-3 flex items-center justify-between font-mono text-micro uppercase tracking-[0.14em]"><span>Tamanho: <strong id="size-chosen" class="text-ink">escolha</strong></span><a href="#medidas" class="text-muted underline underline-offset-4 hover:text-ink" onclick="document.getElementById('medidas').open=true">Guia de medidas</a></div>
+            <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Tamanho"><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="38">38</button><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="40">40</button><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="42">42</button><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="44">44</button><button type="button" role="radio" aria-checked="false" tabindex="-1" class="size-btn" data-size="46">46</button></div>
+            <p id="size-error" hidden class="mt-3 text-sm" style="color: var(--danger)" role="alert">Escolha um tamanho para continuar.</p>
+            <p class="mt-3 text-xs text-muted">O modelo tem 1,82 m e veste 42.</p>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button id="main-add" type="button" data-add class="btn-ink">Adicionar à bag</button>
+            <button type="button" data-buy class="btn-line">Comprar agora</button>
+          </div>
+          <ul class="grid gap-2 text-sm text-muted">
+            <li>✦ Frete grátis acima de R$ 349</li><li>✦ Troca grátis em 30 dias</li><li>✦ Peça numerada com certificado e QR</li>
+          </ul>
+          <div>
+            <details class="acc" open><summary>Descrição</summary><div class="acc-body">Calça cargo cinza-cimento de perna larga, com bolsos laterais de fole e barra com regulagem. Combina com o Obsidian Shell Hoodie no Look Ranked.</div></details>
+            <details class="acc"><summary>Tecido e tecnologia</summary><div class="acc-body"><ul class="grid gap-1.5"><li>· Sarja 300 g/m², 98% algodão, 2% elastano</li><li>· Bolsos laterais de fole com lapela</li><li>· Cós com elástico interno nas laterais</li><li>· Barra com cordão regulável</li></ul></div></details>
+            <details class="acc" id="medidas"><summary>Tabela de medidas</summary><div class="acc-body"><p class="mb-3 text-xs">Medidas da peça (cm)</p><div class="overflow-x-auto"><table class="size-table"><thead><tr><th>Tamanho</th><th>Cintura</th><th>Quadril</th><th>Comprimento</th></tr></thead><tbody><tr><td>38</td><td>76</td><td>104</td><td>104</td></tr><tr><td>40</td><td>80</td><td>108</td><td>105</td></tr><tr><td>42</td><td>84</td><td>112</td><td>106</td></tr><tr><td>44</td><td>88</td><td>116</td><td>107</td></tr><tr><td>46</td><td>92</td><td>120</td><td>108</td></tr></tbody></table></div></div></details>
+            <details class="acc"><summary>Cuidados</summary><div class="acc-body">Lave do avesso em água fria, com cores parecidas. Não use alvejante. Seque à sombra e passe em temperatura baixa, sem passar sobre a estampa.</div></details>
+            <details class="acc border-b border-line"><summary>Envio e trocas</summary><div class="acc-body">Envio em até 2 dias úteis após a confirmação. Frete grátis acima de R$ 349. A primeira troca é por nossa conta em até 30 dias, com a etiqueta e o lacre de numeração intactos.</div></details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap pb-20 md:pb-28">
+    <div class="mb-10 flex flex-wrap items-end justify-between gap-4 md:mb-14">
+      <div><h2 class="section-title">Complete o look</h2><p class="mt-3 text-muted">Peças que foram feitas para andar juntas.</p></div>
+    </div>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-4"><article class="card" data-cursor="view" data-cat="moletons" data-price="389.9" data-order="0">
+        <a href="produto-obsidian-shell-hoodie.html" class="block" aria-label="Obsidian Shell Hoodie, R$ 389,90">
+          <div class="studio aspect-[4/5] rounded-[22px]">
+            <img class="photo" src="products/hoodie.svg" alt="Obsidian Shell Hoodie" loading="lazy">
+            <img class="photo photo-alt" src="products/model-hoodie.svg" alt="" loading="lazy">
+            <span class="absolute left-3 top-3 rounded-full bg-acid text-on-acid px-2.5 py-1 font-mono text-micro font-bold uppercase tracking-[0.12em]">-13%</span>
+            <span class="absolute right-4 top-4 font-mono text-micro uppercase tracking-hud text-muted">Nº 001</span>
+            <span class="quick absolute inset-x-3 bottom-3 rounded-full bg-invert py-3 text-center font-mono text-micro font-bold uppercase tracking-[0.16em] text-on-invert">Ver tamanhos →</span>
+          </div>
+          <h3 class="mt-4 font-display text-[clamp(0.98rem,1.3vw,1.15rem)] font-bold leading-tight">Obsidian Shell Hoodie</h3>
+          <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Moletom 520 g/m² · Oversized</p>
+          <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 389,90</span><span class="tick font-mono text-label text-muted line-through">R$ 449,90</span></div>
+          <p class="tick text-small text-muted">ou 6x de R$ 64,98 sem juros</p>
+          <div class="mt-4"><div class="stock"><i style="width:25%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 37 de 150</span></div>
+        </a>
+      </article>
+<article class="card" data-cursor="view" data-cat="camisetas" data-price="179.9" data-order="1">
+        <a href="produto-phantom-frame-tee.html" class="block" aria-label="Phantom Frame Tee, R$ 179,90">
+          <div class="studio aspect-[4/5] rounded-[22px]">
+            <img class="photo" src="products/tee.svg" alt="Phantom Frame Tee" loading="lazy">
+            <img class="photo photo-alt" src="products/model-tee.svg" alt="" loading="lazy">
+            <span class="absolute left-3 top-3 rounded-full bg-acid text-on-acid px-2.5 py-1 font-mono text-micro font-bold uppercase tracking-[0.12em]">-10%</span>
+            <span class="absolute right-4 top-4 font-mono text-micro uppercase tracking-hud text-muted">Nº 002</span>
+            <span class="quick absolute inset-x-3 bottom-3 rounded-full bg-invert py-3 text-center font-mono text-micro font-bold uppercase tracking-[0.16em] text-on-invert">Ver tamanhos →</span>
+          </div>
+          <h3 class="mt-4 font-display text-[clamp(0.98rem,1.3vw,1.15rem)] font-bold leading-tight">Phantom Frame Tee</h3>
+          <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Algodão 280 g/m² · Boxy</p>
+          <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 179,90</span><span class="tick font-mono text-label text-muted line-through">R$ 199,90</span></div>
+          <p class="tick text-small text-muted">ou 6x de R$ 29,98 sem juros</p>
+          <div class="mt-4"><div class="stock"><i style="width:37%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 112 de 300</span></div>
+        </a>
+      </article>
+<article class="card" data-cursor="view" data-cat="acessorios" data-price="149.9" data-order="2">
+        <a href="produto-respawn-cap.html" class="block" aria-label="Respawn Cap, R$ 149,90">
+          <div class="studio aspect-[4/5] rounded-[22px]">
+            <img class="photo" src="products/cap.svg" alt="Respawn Cap" loading="lazy">
+            <img class="photo photo-alt" src="products/model-cap.svg" alt="" loading="lazy">
+            <span class="absolute left-3 top-3 rounded-full bg-invert text-on-invert px-2.5 py-1 font-mono text-micro font-bold uppercase tracking-[0.12em]">Novo</span>
+            <span class="absolute right-4 top-4 font-mono text-micro uppercase tracking-hud text-muted">Nº 003</span>
+            <span class="quick absolute inset-x-3 bottom-3 rounded-full bg-invert py-3 text-center font-mono text-micro font-bold uppercase tracking-[0.16em] text-on-invert">Ver tamanhos →</span>
+          </div>
+          <h3 class="mt-4 font-display text-[clamp(0.98rem,1.3vw,1.15rem)] font-bold leading-tight">Respawn Cap</h3>
+          <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Sarja 6 gomos · Aba curva</p>
+          <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 149,90</span></div>
+          <p class="tick text-small text-muted">ou 6x de R$ 24,98 sem juros</p>
+          <div class="mt-4"><div class="stock"><i style="width:32%"></i></div><span class="tick mt-2 block font-mono text-micro uppercase tracking-[0.14em] text-acid-ink">Restam 64 de 200</span></div>
+        </a>
+      </article>
+<article class="card" data-cursor="view" data-cat="acessorios" data-price="69.9" data-order="3">
+        <a href="produto-lag-zero-socks.html" class="block" aria-label="Lag Zero Socks · 3 pares, R$ 69,90">
+          <div class="studio aspect-[4/5] rounded-[22px]">
+            <img class="photo" src="products/socks.svg" alt="Lag Zero Socks · 3 pares" loading="lazy">
+            <img class="photo photo-alt" src="products/model-cap.svg" alt="" loading="lazy">
+            <span class="absolute left-3 top-3 rounded-full bg-acid text-on-acid px-2.5 py-1 font-mono text-micro font-bold uppercase tracking-[0.12em]">-22%</span>
+            <span class="absolute right-4 top-4 font-mono text-micro uppercase tracking-hud text-muted">Nº 004</span>
+            <span class="quick absolute inset-x-3 bottom-3 rounded-full bg-invert py-3 text-center font-mono text-micro font-bold uppercase tracking-[0.16em] text-on-invert">Ver tamanhos →</span>
+          </div>
+          <h3 class="mt-4 font-display text-[clamp(0.98rem,1.3vw,1.15rem)] font-bold leading-tight">Lag Zero Socks · 3 pares</h3>
+          <p class="mt-1 font-mono text-micro uppercase tracking-[0.12em] text-muted">Cano alto · Felpa no pé</p>
+          <div class="mt-3 flex flex-wrap items-baseline gap-x-2.5"><span class="tick font-display text-lg font-bold">R$ 69,90</span><span class="tick font-mono text-label text-muted line-through">R$ 89,90</span></div>
+          <p class="tick text-small text-muted">ou 6x de R$ 11,65 sem juros</p>
+          <span class="mt-4 block font-mono text-micro uppercase tracking-[0.14em] text-muted">Linha permanente</span>
+        </a>
+      </article></div>
+  </section>
+
+  <div id="buy-bar" class="buy-bar fixed inset-x-0 bottom-0 z-40 border-t border-line lg:hidden" style="background: var(--surface); padding-bottom: env(safe-area-inset-bottom, 0px);">
+    <div class="wrap flex items-center justify-between gap-4 py-3">
+      <div class="min-w-0"><p class="truncate font-display font-bold">Respawn Cargo</p><p class="tick text-sm text-muted">R$ 259,90</p></div>
+      <button type="button" data-add class="btn-ink shrink-0 !py-3">Adicionar</button>
+    </div>
+  </div>
+</main>
+<footer class="mt-8 border-t border-line">
+  <div class="wrap grid gap-12 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <div>
+      <a href="index.html" class="font-display text-2xl font-extrabold tracking-[0.06em]">GEEK<span class="text-acid-ink">/</span>SWIN</a>
+      <p class="mt-4 max-w-[34ch] text-sm text-muted">Gamer streetwear de corte premium. Drops numerados, sem reposição.</p>
+      <form data-signup="footer" data-success="foot-ok" class="mt-6 flex max-w-sm gap-2" novalidate>
+        <label for="foot-email" class="sr-only">Seu e-mail</label>
+        <input id="foot-email" type="email" autocomplete="email" placeholder="seu@email.com" class="min-w-0 flex-1 rounded-full border border-line bg-surface px-5 py-3 text-sm focus:border-ink">
+        <button class="btn-ink !px-5 !py-3" type="submit">Entrar</button>
+        <p data-error hidden class="sr-only" role="alert">E-mail inválido</p>
+      </form>
+      <p id="foot-ok" hidden class="mt-6 text-sm font-medium text-acid-ink" role="status">Pronto, você está na lista do próximo drop ✓</p>
+    </div>
+    <div><p class="font-mono text-micro uppercase tracking-hud text-muted">Loja</p><ul class="mt-4 grid gap-2.5 text-sm"><li><a href="loja.html" class="inline-block py-1 hover:text-acid-ink">Todas as peças</a></li><li><a href="loja.html#moletons" class="inline-block py-1 hover:text-acid-ink">Moletons</a></li><li><a href="loja.html#camisetas" class="inline-block py-1 hover:text-acid-ink">Camisetas</a></li><li><a href="loja.html#calcas" class="inline-block py-1 hover:text-acid-ink">Calças</a></li><li><a href="loja.html#kits" class="inline-block py-1 hover:text-acid-ink">Kits</a></li></ul></div><div><p class="font-mono text-micro uppercase tracking-hud text-muted">Marca</p><ul class="mt-4 grid gap-2.5 text-sm"><li><a href="drops.html" class="inline-block py-1 hover:text-acid-ink">Drop Genesis</a></li><li><a href="lookbook.html" class="inline-block py-1 hover:text-acid-ink">Lookbook</a></li><li><a href="sobre.html" class="inline-block py-1 hover:text-acid-ink">Sobre a GEEK SWIN</a></li></ul></div><div><p class="font-mono text-micro uppercase tracking-hud text-muted">Ajuda</p><ul class="mt-4 grid gap-2.5 text-sm"><li><a href="sobre.html#faq" class="inline-block py-1 hover:text-acid-ink">Trocas e devoluções</a></li><li><a href="sobre.html#faq" class="inline-block py-1 hover:text-acid-ink">Guia de medidas</a></li><li><a href="sobre.html#contato" class="inline-block py-1 hover:text-acid-ink">Fale com a gente</a></li></ul></div>
+  </div>
+  <div class="wrap flex flex-wrap items-center justify-between gap-4 border-t border-line py-6 font-mono text-micro uppercase tracking-[0.16em] text-muted">
+    <span>© 2026 GEEK SWIN · Gamer Streetwear</span><span>Protótipo · imagens ilustrativas · pagamento desligado</span>
+  </div>
+</footer>
+<div id="toast" class="toast" role="status" aria-live="polite">
+  <div class="flex items-center gap-4 rounded-3xl bg-invert p-3 pr-5 text-on-invert shadow-2xl">
+    <div class="studio size-16 shrink-0 rounded-2xl"><img id="toast-img" src="" alt=""></div>
+    <div class="min-w-0 flex-1"><p class="font-mono text-micro uppercase tracking-[0.16em] text-acid">Adicionado à bag ✓</p>
+      <p id="toast-name" class="truncate font-display font-bold"></p><p id="toast-meta" class="tick text-xs opacity-70"></p></div>
+    <a href="carrinho.html" class="btn-acid !px-4 !py-2.5 !text-micro">Ver bag</a>
+  </div>
+</div>
+<dialog id="drop-modal" class="drop-modal" aria-labelledby="drop-title">
+  <div class="grid md:grid-cols-[1fr_1.1fr]">
+    <div class="studio relative hidden min-h-[30rem] !bg-acid md:block" style="background: var(--acid)">
+      <img src="products/model-tee.svg" alt="">
+      <span class="absolute left-5 top-5 rounded-full bg-invert px-3 py-1.5 font-mono text-micro font-bold uppercase tracking-[0.16em] text-on-invert">Drop 001 · Genesis</span>
+    </div>
+    <div class="relative flex flex-col justify-center gap-6 p-7 sm:p-10">
+      <button type="button" data-close class="absolute right-4 top-4 grid size-10 place-items-center rounded-full border border-line text-lg hover:border-ink" aria-label="Fechar">✕</button>
+      <span class="inline-flex w-fit items-center gap-2 rounded-full bg-acid px-3 py-1.5 font-mono text-micro font-bold uppercase tracking-[0.16em] text-on-acid"><i class="block size-1.5 animate-pulse rounded-full" style="background: var(--on-acid)"></i>Abre em</span>
+      <div class="tick flex gap-3 font-display font-extrabold"><div><span data-cd="d" class="block text-[clamp(2rem,5vw,3rem)] leading-none">00</span><span class="font-mono text-micro font-medium uppercase tracking-[0.16em] text-muted">dias</span></div><div><span data-cd="h" class="block text-[clamp(2rem,5vw,3rem)] leading-none">00</span><span class="font-mono text-micro font-medium uppercase tracking-[0.16em] text-muted">horas</span></div><div><span data-cd="m" class="block text-[clamp(2rem,5vw,3rem)] leading-none">00</span><span class="font-mono text-micro font-medium uppercase tracking-[0.16em] text-muted">min</span></div><div><span data-cd="s" class="block text-[clamp(2rem,5vw,3rem)] leading-none text-acid-ink">00</span><span class="font-mono text-micro font-medium uppercase tracking-[0.16em] text-muted">seg</span></div></div>
+      <div>
+        <h2 id="drop-title" class="font-display text-[clamp(1.7rem,3.2vw,2.5rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.03em]">Entre 1 hora antes de todo mundo</h2>
+        <p class="mt-3 max-w-[40ch] text-muted">São 850 peças numeradas e não vai ter reposição. Quem está na lista recebe o link do Drop 001 às 19h, uma hora antes da abertura.</p>
+      </div>
+      <form data-signup="popup" data-success="modal-success" class="flex flex-col gap-3" novalidate>
+        <label for="modal-email" class="font-mono text-micro uppercase tracking-[0.16em] text-muted">Seu melhor e-mail</label>
+        <input id="modal-email" type="email" autofocus autocomplete="email" placeholder="seu@email.com" class="rounded-full border border-line bg-bg px-6 py-4 text-base focus:border-ink">
+        <p data-error hidden class="text-sm" style="color: var(--danger)" role="alert">Digite um e-mail válido, tipo nome@gmail.com.</p>
+        <button type="submit" class="btn-ink">Quero acesso antecipado</button>
+        <p class="text-xs text-muted">Só aviso de drop. Sem spam. Sai quando quiser.</p>
+      </form>
+      <div id="modal-success" hidden role="status">
+        <p class="font-display text-2xl font-extrabold uppercase">Você está na lista ✓</p>
+        <p class="mt-2 text-muted">No dia 10/10, às 19h, o link chega no seu e-mail.</p>
+        <button type="button" data-close data-focus class="btn-acid mt-6">Ver as peças</button>
+      </div>
+      <button type="button" data-close class="w-fit font-mono text-micro uppercase tracking-[0.16em] text-muted underline underline-offset-4 hover:text-ink">Agora não</button>
+    </div>
+  </div>
+</dialog>
+<script src="assets/catalog.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

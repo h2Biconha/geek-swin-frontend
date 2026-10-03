@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/* Canais RGB (sem rgb()) para o Tailwind aplicar opacidade: bg-ink/10, border-line/50... */
+:root {
+  color-scheme: light;
+  --bg: 244 244 240; /* off-white frio */
+  --surface: 255 255 255;
+  --card: 233 233 228; /* fundo de estúdio */
+  --ink: 11 11 11;
+  --muted: 92 94 99;
+  --danger: 180 35 24; /* #B42318, erros de formulário */
+  --line: 11 11 11; /* use com opacidade: border-line/15 */
+  --acid: 57 255 20;
+  --acid-ink: 27 122 10; /* verde legível em fundo claro */
+  --on-acid: 11 11 11;
+  --invert: 11 11 11;
+  --on-invert: 244 244 240;
+}
+
+html {
+  background: rgb(var(--bg));
+}
+
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+}
+
+::selection {
+  @apply bg-acid text-on-acid;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--acid-ink));
+  outline-offset: 4px;
+}
+
+/* Fundo de estúdio das fotos: luz no centro, cai para o tom do card */
+.studio {
+  background: radial-gradient(120% 80% at 50% 30%, rgb(var(--surface)) 0%, rgb(var(--card)) 70%);
+}
+
+/* Popup do drop (<dialog> nativo) */
+dialog.drop-modal::backdrop {
+  background: rgb(11 11 11 / 0.55);
+  backdrop-filter: blur(4px);
+}
+
+section[id] {
+  scroll-margin-top: 7rem;
+}
+
+@keyframes bump {
+  40% {
+    transform: scale(1.35);
+    background: rgb(var(--acid));
+    color: rgb(var(--on-acid));
+  }
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.has-lux-cursor,
+  html.has-lux-cursor * {
+    cursor: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* iOS dá zoom na página quando o campo tem menos de 16px: no celular os campos ficam com 16px */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px !important; }
+}
