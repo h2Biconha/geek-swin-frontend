@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 230 880 1100" preserveAspectRatio="xMidYMid meet" role="img"><defs><clipPath id="g12c"><path d="M262 720 C262 464 378 372 500 370 C622 372 738 464 738 720 Z"/></clipPath>
+       <linearGradient id="g12v" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity="0.32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity="0.020999999999999998"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.32"/></linearGradient>
+       <linearGradient id="g12h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.015"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.16"/></linearGradient></defs>
+  <path d="M262 720 C262 464 378 372 500 370 C622 372 738 464 738 720 Z" fill="#1A1A1C" stroke="#0B0B0C" stroke-width="3" stroke-linejoin="round"/>
+  <g clip-path="url(#g12c)"><rect width="1000" height="1250" fill="url(#g12v)"/><rect width="1000" height="1250" fill="url(#g12h)"/></g>
+  <path d="M410 720 C410 620 590 620 590 720 Z" fill="#0E0E10" stroke="#0B0B0C" stroke-width="3"/>
+    <path d="M396 664 L604 664 L604 690 L396 690 Z" fill="#1A1A1C" stroke="#0B0B0C" stroke-width="2.5"/>
+    <rect x="566" y="654" width="40" height="46" fill="none" stroke="#8a8a90" stroke-width="5"/>
+    <path d="M500 370 L500 640" fill="none" stroke="#0B0B0C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M500 370 C430 430 390 560 380 720" fill="none" stroke="#0B0B0C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M500 370 C570 430 610 560 620 720" fill="none" stroke="#0B0B0C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M512 380 L512 630" fill="none" stroke="#45454B" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/><path d="M488 380 L488 630" fill="none" stroke="#45454B" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/>
+    <ellipse cx="500" cy="368" rx="22" ry="10" fill="#1A1A1C" stroke="#0B0B0C" stroke-width="2.5"/>
+    <path d="M276 708 L724 708" fill="none" stroke="#45454B" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/><defs><filter id="sh" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="14"/></filter></defs><ellipse cx="500" cy="780" rx="260" ry="20" fill="#000" opacity=".16" filter="url(#sh)"/></svg>

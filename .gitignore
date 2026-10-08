@@ -45,3 +45,6 @@ next-env.d.ts
 *.zip
 # o .env.example vai para o repositório (só nomes de variáveis, nunca valores)
 !.env.example
+
+# arquivo único gerado por npm run standalone
+/standalone-dist

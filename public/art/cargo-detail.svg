@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="260 520 280 350" preserveAspectRatio="xMidYMid meet" role="img"><defs><clipPath id="g20c"><path d="M328 210 L672 210 L676 264 L712 1128 L520 1128 L500 540 L480 1128 L288 1128 L324 264 Z"/></clipPath>
+       <linearGradient id="g20v" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity="0.16"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity="0.063"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.16"/></linearGradient>
+       <linearGradient id="g20h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.045"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.08"/></linearGradient></defs>
+  <path d="M328 210 L672 210 L676 264 L712 1128 L520 1128 L500 540 L480 1128 L288 1128 L324 264 Z" fill="#B9B6AD" stroke="#86837B" stroke-width="3" stroke-linejoin="round"/>
+  <g clip-path="url(#g20c)"><rect width="1000" height="1250" fill="url(#g20v)"/><rect width="1000" height="1250" fill="url(#g20h)"/></g>
+  
+    <path d="M328 210 L672 210 L676 264 L324 264 Z" fill="#B9B6AD" stroke="#86837B" stroke-width="3"/>
+    <path d="M330 254 L670 254" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/>
+    <rect x="344" y="204" width="16" height="66" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/><rect x="422" y="204" width="16" height="66" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/><rect x="562" y="204" width="16" height="66" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/><rect x="640" y="204" width="16" height="66" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/>
+    <path d="M292 1100 L478 1100" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/><path d="M522 1100 L708 1100" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/><path d="M500 264 L500 470" fill="none" stroke="#86837B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M522 266 L522 444 Q522 476 498 492" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/>
+      <path d="M340 266 C360 330 384 370 420 386" fill="none" stroke="#86837B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M660 266 C640 330 616 370 580 386" fill="none" stroke="#86837B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      
+      <circle cx="500" cy="236" r="9" fill="#8a8a90"/>
+        <path d="M300 590 L416 590 L416 800 L300 800 Z" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/>
+        <path d="M310 600 L406 600 L406 790 L310 790 Z" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/>
+        <path d="M294 566 L422 566 L422 626 L294 626 Z" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/>
+        <path d="M302 616 L414 616" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/>
+        <path d="M586 590 L702 590 L702 800 L586 800 Z" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/>
+        <path d="M596 600 L692 600 L692 790 L596 790 Z" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/>
+        <path d="M580 566 L708 566 L708 626 L580 626 Z" fill="#B9B6AD" stroke="#86837B" stroke-width="2.5"/>
+        <path d="M588 616 L700 616" fill="none" stroke="#9C998F" stroke-width="2" stroke-dasharray="7 6" stroke-linecap="round"/><path d="M372 1128 L366 1170" stroke="#86837B" stroke-width="4"/><rect x="358" y="1166" width="16" height="22" rx="4" fill="#8a8a90"/>
+         <path d="M628 1128 L634 1170" stroke="#86837B" stroke-width="4"/><rect x="626" y="1166" width="16" height="22" rx="4" fill="#8a8a90"/><rect x="604" y="270" width="26" height="14" fill="#2E2EFF"/><defs><filter id="sh" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="14"/></filter></defs><ellipse cx="500" cy="1196" rx="300" ry="20" fill="#000" opacity=".16" filter="url(#sh)"/></svg>

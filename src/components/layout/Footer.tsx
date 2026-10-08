@@ -1,0 +1,52 @@
+import Link from "next/link";
+import { BRAND } from "@/lib/brand";
+import { CATEGORIES, SITE } from "@/lib/catalog";
+import Lobby from "../sections/Lobby";
+
+const COLS: [string, [string, string][]][] = [
+  ["Shop", [["Tudo", "/shop"], ...CATEGORIES.map((c) => [c.name, `/shop?categoria=${c.slug}`] as [string, string])]],
+  ["Marca", [["Drops", "/drops"], ["Archive", "/drops#archive"], ["About", "/about"], ["Members", "/members"]]],
+  ["Ajuda", [["Envio e prazos", "/help#envio"], ["Trocas e devoluções", "/help#trocas"], ["Pré-venda", "/help#pre-venda"], ["Contato", "/help#contato"]]],
+];
+
+export default function Footer() {
+  return (
+    <footer className="theme-dark">
+      <Lobby />
+      <div className="wrap grid gap-10 border-t border-line pt-12 pb-10 sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_1.2fr]">
+        {COLS.map(([t, links]) => (
+          <nav key={t} aria-label={t}>
+            <p className="eyebrow text-muted">{t}</p>
+            <ul className="mt-4 grid gap-1">
+              {links.map(([l, h]) => (
+                <li key={h}>
+                  <Link href={h} className="link-u inline-flex min-h-9 items-center">
+                    {l}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
+        <div>
+          <p className="eyebrow text-muted">Comunidade</p>
+          <a href={`https://instagram.com/${BRAND.instagram}`} target="_blank" rel="noopener noreferrer" className="font-display mt-4 inline-block text-d4 hover:text-accent-fg">
+            @{BRAND.instagram}
+          </a>
+          <p className="mt-3 max-w-[30ch] text-small text-muted">Marque a gente usando a peça. As melhores fotos entram no site.</p>
+        </div>
+      </div>
+      <div className="wrap overflow-hidden" aria-hidden>
+        {/* decorativo: o texto vem de um atributo via CSS, então leitor de tela e auditoria de contraste ignoram */}
+        <p data-word={BRAND.name} className="font-display -mb-[0.12em] text-center text-[clamp(4rem,19.5vw,25rem)] leading-[0.8] whitespace-nowrap text-fg/[0.07] before:content-[attr(data-word)]" />
+      </div>
+      <div className="wrap flex flex-col gap-3 border-t border-line py-6 text-small text-muted md:flex-row md:items-center md:justify-between">
+        <p>
+          © {new Date().getFullYear()} {BRAND.name} · {BRAND.cnpj ? `CNPJ ${BRAND.cnpj}` : "CNPJ a definir"}
+        </p>
+        <p>Pix · Cartão em até 6x · Boleto</p>
+        {SITE.preview && <p className="text-fg">Prévia · dados de exemplo</p>}
+      </div>
+    </footer>
+  );
+}

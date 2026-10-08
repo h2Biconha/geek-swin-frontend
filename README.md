@@ -1,7 +1,7 @@
-# GEEK SWIN · Luxury Gamer Streetwear
+# GEEK SWIM · Streetwear nascido da cultura gamer
 
-Front-end da loja da GEEK SWIN: vitrine clara, drop numerado, página por produto e bag.
-O front está pronto; **o back-end ainda não existe**. Tudo o que hoje é simulado está listado abaixo e detalhado em [BACKEND.md](BACKEND.md).
+Front-end da loja da GEEK SWIM, organizado em drops numerados. A loja tem uma página editorial por produto, checkout em 4 etapas, wishlist, área de conta e GEEK LEVEL.
+**O front está pronto. O back-end ainda não existe.** Tudo o que está simulado aparece na própria interface como "Prévia" e está listado abaixo. Os contratos para o back estão em [BACKEND.md](BACKEND.md).
 
 ## Rodar
 
@@ -9,56 +9,94 @@ Precisa de Node 20 ou mais novo.
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm run build      # build de produção (gera as 8 páginas de produto estáticas)
+npm run dev          # http://localhost:3000
+npm run build        # build de produção (27 páginas estáticas)
 npm run lint
+npm run art          # regenera os desenhos técnicos das peças em public/art/
+npm run standalone   # gera standalone-dist/ABRIR-GEEK-SWIN.html (abre com duplo clique, sem servidor)
 ```
 
-Copie `.env.example` para `.env.local` quando o back-end começar a usar variáveis.
+Copie `.env.example` para `.env.local` só quando for ligar algum serviço. Sem nenhuma variável, o site funciona inteiro em modo prévia.
 
 ## Stack
 
 | | |
 |---|---|
 | Framework | Next.js 16 (App Router) + React 19 + TypeScript |
-| Estilo | Tailwind CSS 4 lendo `tailwind.config.ts` via `@config` |
-| Animação | framer-motion 14, scroll suave com `lenis/react` |
-| Dados | `src/lib/catalog.json` (fonte única, sem banco) |
+| Estilo | Tailwind CSS 4 com tokens em `src/app/globals.css` (sem arquivo de config) |
+| Animação | Só CSS (transições, keyframes e um IntersectionObserver). Respeita `prefers-reduced-motion` |
+| Fontes | Archivo variável (peso e largura) + JetBrains Mono, via `next/font` |
+| Dados | `src/lib/catalog.json`, a fonte única até existir API |
+
+## Rotas
+
+| Rota | O que é |
+|---|---|
+| `/` | Home: hero do drop, peças, como funcionam os drops, próximo drop, members, comunidade, lobby |
+| `/shop` | Todas as peças. Filtros (drop, categoria, tamanho, preço, disponível) e ordenação na URL, sem recarregar |
+| `/product/[slug]` | Página editorial da peça: galeria com zoom, tamanhos, guia de medidas, pré-venda, avisar-me |
+| `/drops` | Linha do tempo dos drops e arquivo das peças esgotadas |
+| `/drops/[slug]` | Landing do drop (`001-insert-coin`, `002`) |
+| `/wishlist` | Peças salvas no navegador |
+| `/account` | MINHA GEEK SWIM: login (prévia) e conta de exemplo com GEEK LEVEL |
+| `/members` | Programa de membros e níveis |
+| `/about` | Manifesto |
+| `/help` | Envio, trocas, pré-venda, pagamento e contato |
+| `/checkout` | Checkout em 4 etapas (dados, entrega, pagamento, revisão) |
+| 404 | "Player not found" |
+
+Os endereços antigos (`/loja`, `/produto/*`, `/sobre`, `/lookbook`, `/carrinho`) redirecionam para os novos em `next.config.ts`.
 
 ## Estrutura
 
 ```
-src/app/                  rotas: / · /loja · /produto/[slug] · /lookbook · /drops · /sobre · /carrinho
-src/lib/catalog.json      catálogo: peças, preços, estoque, tamanhos, tabelas de medidas, looks, data do drop
-src/lib/products.ts       tipos e funções de preço (6x, Pix, desconto, relacionados)
-src/lib/cart.ts           bag no navegador (localStorage "gs-cart")
-src/lib/subscribe.ts      cadastro de e-mail (simulado)
-src/lib/motion.ts         curvas e tempos das animações
-src/components/           componentes de UI
-public/products/          imagens ilustrativas (SVG) das peças e modelos
-prototipo/                versão HTML estática do mesmo site (abre com dois cliques, gerada por build.py)
-docs/GUIA-NEXTJS.md       guia de uso do front (como adicionar peça, trocar fotos, popup etc.)
+src/app/                     rotas, metadata, sitemap, robots, imagem de compartilhamento
+src/app/api/                 subscribe e checkout (respondem 501 até o back existir)
+src/components/ui/           design system: botões, Modal, Drawer, Media, Countdown, Accordion...
+src/components/product/      card, grid, galeria, seletor de tamanho, guia de medidas, BuyBox
+src/components/drop/         hero, timeline, próximo drop, "por que drops"
+src/components/layout/       header, menu, busca, bag, rodapé, loading, aviso de drop
+src/components/views/        uma view por página (usadas pelo Next E pelo arquivo único)
+src/lib/catalog.json         peças, preços, estoque, tamanhos, drops, reviews, comunidade
+src/lib/catalog.ts           tipos e regras: preço, parcela, Pix, status de estoque, fase do drop
+src/lib/brand.ts             nome da marca e contatos (troque o nome aqui e muda no site todo)
+src/lib/commerce/            cliente do checkout, frete, cupom e adaptadores de pagamento (servidor)
+src/lib/cart.ts · wishlist.ts  bag e wishlist no navegador
+src/lib/subscribe.ts         lista de e-mail/WhatsApp (não conectada)
+src/lib/analytics.ts         eventos para GTM/Meta Pixel (só disparam se os IDs existirem)
+scripts/draw-flats.mjs       gera os desenhos técnicos das peças (SVG)
+scripts/build-standalone.mjs gera o arquivo único, com scripts/standalone/ (rota no hash)
+docs/                        auditoria e direção, lista de fotos
 ```
 
-## O que é de mentira (mock)
+## O que é prévia (mock)
 
-| Item | Onde está hoje | O que o back precisa fazer |
+Nada disso finge funcionar. A interface avisa em cada ponto.
+
+| Item | Hoje | Para ligar |
 |---|---|---|
-| Catálogo e preços | `src/lib/catalog.json` | servir via API ou CMS |
-| Estoque ("Restam 37 de 150") | número fixo no JSON | estoque real, baixa a cada venda paga |
-| Pré-venda do drop | `src/lib/presale.ts` + `drop.presale` / `drop.shipsFrom` no JSON | reserva, número da peça, envio a partir da data, estorno (BACKEND.md) |
-| Cadastro de e-mail (popup, rodapé, /drops) | `src/lib/subscribe.ts` finge sucesso | salvar com consentimento (LGPD) |
-| Bag | `localStorage` no navegador | carrinho no servidor ao iniciar o checkout |
-| Checkout | botão "Finalizar compra" desligado em `src/components/CartView.tsx` | pagamento (Pix, cartão parcelado) |
-| Frete | só a regra "grátis acima de R$ 349" no front | cálculo por CEP |
-| Contatos, CNPJ e fotos | textos fictícios em `/sobre` e no rodapé | dados reais |
+| Catálogo, preço e estoque | `catalog.json` (estoque ilustrativo, `site.preview: true`) | API ou plataforma. Ver BACKEND.md > Catálogo e Estoque |
+| Lista (lobby, aviso de drop, avisar-me, members) | valida e diz "não conectado" | `NEXT_PUBLIC_SUBSCRIBE_URL` + rota `/api/subscribe` |
+| Checkout | modo demonstração: percorre as 4 etapas e não cobra nada | `NEXT_PUBLIC_CHECKOUT_URL` + `/api/checkout` + adaptador Mercado Pago ou Stripe |
+| Frete | valores de exemplo; CEP real via ViaCEP | `NEXT_PUBLIC_SHIPPING_URL` (Melhor Envio/Correios) |
+| Cupom | sempre recusa com aviso de prévia | validação no servidor |
+| Conta e GEEK LEVEL | conta de exemplo, login desligado | auth (link mágico por e-mail) + pedidos |
+| Reviews e fotos da comunidade | vazios, com estado honesto | só publicar avaliações e fotos reais e autorizadas |
+| Fotos das peças | desenhos técnicos em SVG | fotos reais, ver [docs/FOTOS.md](docs/FOTOS.md) |
+| CNPJ, WhatsApp, e-mail | `null` em `brand.ts` (o site esconde o que é nulo) | dados reais antes de vender |
 
-## Acessibilidade e design
+## Regras de design
 
-O site passou por auditoria WCAG 2.1 AA (axe-core sem violações em todas as rotas, desktop e celular). Regras para manter:
+- Cores só pelos tokens de `globals.css` (`bg`, `fg`, `muted`, `line`, `accent`, `danger`...). Nada de hex solto no JSX.
+- O acento (Hyperlink Blue `#2E2EFF`) é para ação e estado. Em fundo escuro, texto usa `accent-fg` (`#A6A6FF`).
+- Seções escuras usam a classe `theme-dark`, que troca os tokens. Os componentes não precisam saber disso.
+- Texto pequeno: `text-micro` (11px), `text-label`, `text-small`. Nunca menos que 11px.
+- Números do catálogo (tiragem, restantes, desconto Pix, parcela) são calculados, nunca digitados em texto.
+- Nunca inventar estoque, avaliação, foto de cliente ou depoimento. Sem dado real, o estado vazio aparece.
 
-- Cores só pelos tokens do `tailwind.config.ts` (`text-danger`, `text-acid-ink`...), nada de hex solto no JSX.
-- Verde neon `acid` só como fundo, com texto preto. Texto verde usa `acid-ink`.
-- Texto pequeno usa a escala `text-micro` (11px), `text-label` (12px) e `text-small` (13px). Não use tamanhos abaixo de 11px.
-- Toda imagem dentro de link precisa de nome acessível (`aria-label` no link ou `alt` na imagem).
-- Números que vêm do catálogo (tiragem, desconto) são calculados, nunca digitados no texto.
+## Qualidade verificada
+
+- Build de produção sem erros, `eslint` e `tsc` limpos.
+- Sem rolagem horizontal em 375, 390, 430, 768, 1024, 1440 e 1920 px nas 13 páginas.
+- axe-core (WCAG 2.1 AA) sem violações.
+- Fluxos testados no celular: tamanho obrigatório, bag, guia de medidas, busca, menu, filtros, wishlist e checkout completo.
