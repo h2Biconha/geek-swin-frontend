@@ -2,7 +2,7 @@
  * Gera um HTML único que abre com duplo clique (sem servidor, sem internet obrigatória).
  * Usa as mesmas views do site Next; só troca next/link e next/navigation por shims com rota no hash.
  *
- *   npm run standalone                 -> standalone-dist/ABRIR-GEEK-SWIN.html
+ *   npm run standalone                 -> standalone-dist/ABRIR-GEEK-SWIM.html
  *   npm run standalone -- caminho.html -> grava onde você mandar
  *
  * As fontes vêm do Google Fonts quando há internet; offline, cai para Helvetica/Arial.
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const here = join(root, "scripts/standalone");
-const out = resolve(process.argv[2] ?? join(root, "standalone-dist/ABRIR-GEEK-SWIN.html"));
+const out = resolve(process.argv[2] ?? join(root, "standalone-dist/ABRIR-GEEK-SWIM.html"));
 const tmp = join(root, "standalone-dist/.tmp");
 mkdirSync(tmp, { recursive: true });
 mkdirSync(dirname(out), { recursive: true });

@@ -1,5 +1,5 @@
 /**
- * Roteador do arquivo único (ABRIR-GEEK-SWIN.html). A rota mora no hash (#/shop?x=1)
+ * Roteador do arquivo único (ABRIR-GEEK-SWIM.html). A rota mora no hash (#/shop?x=1)
  * porque um arquivo aberto com duplo clique (file://) não tem servidor para resolver /shop.
  */
 import { useSyncExternalStore } from "react";

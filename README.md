@@ -13,7 +13,7 @@ npm run dev          # http://localhost:3000
 npm run build        # build de produção (27 páginas estáticas)
 npm run lint
 npm run art          # regenera os desenhos técnicos das peças em public/art/
-npm run standalone   # gera standalone-dist/ABRIR-GEEK-SWIN.html (abre com duplo clique, sem servidor)
+npm run standalone   # gera standalone-dist/ABRIR-GEEK-SWIM.html (abre com duplo clique, sem servidor)
 ```
 
 Copie `.env.example` para `.env.local` só quando for ligar algum serviço. Sem nenhuma variável, o site funciona inteiro em modo prévia.

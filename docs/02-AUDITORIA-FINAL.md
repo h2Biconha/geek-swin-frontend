@@ -9,7 +9,7 @@ O que foi **verificado** (testado) está marcado como tal. O resto é avaliaçã
 - 13 páginas sem rolagem horizontal em 375, 390, 430, 768, 1024, 1440 e 1920 px.
 - axe-core (WCAG 2.1 AA): zero violações.
 - Fluxo no celular (390 px): erro de tamanho, bag, guia de medidas, busca, menu, filtros pela URL, wishlist e checkout completo (4 etapas, CEP preenchido por ViaCEP).
-- Arquivo único `ABRIR-GEEK-SWIN.html`: todas as rotas abrem por `file://`, voltar do navegador funciona, sem erros de console.
+- Arquivo único `ABRIR-GEEK-SWIM.html`: todas as rotas abrem por `file://`, voltar do navegador funciona, sem erros de console.
 
 ## 1. Cliente comum (quer comprar uma peça)
 
@@ -30,7 +30,7 @@ O que foi **verificado** (testado) está marcado como tal. O resto é avaliaçã
 
 **Parece marca, e não loja de produto gamer? Sim.** A linguagem é de drop (número, tiragem, status, contagem, arquivo de esgotados), o manifesto vem antes da peça e o vocabulário gamer aparece só como tempero ("Insert coin", "Player not found", GEEK LEVEL). Não tem neon, pixel art nem controle de videogame na cara.
 **Decisões que são suas, ainda em aberto:**
-1. Nome: o site usa **GEEK SWIM** (como no seu briefing). O projeto antigo usava GEEK SWIN. Troca em um lugar só: `src/lib/brand.ts`.
+1. Nome: **GEEK SWIM**, confirmado pelo Henrique em 08/10 (o projeto antigo usava GEEK SWIN). Fica em `src/lib/brand.ts`.
 2. Políticas exibidas no site: primeira troca grátis em 30 dias, frete grátis acima de R$ 349, 6x sem juros, 5% no Pix. Vieram do site anterior: confirme ou mude em `catalog.json`.
 3. Datas e tiragem: abertura em 10/10 às 20h, envio a partir de 14/10 (provisório), 850 peças no Drop 001.
 4. WhatsApp, e-mail e CNPJ reais (hoje ficam escondidos).
