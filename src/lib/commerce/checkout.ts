@@ -20,8 +20,21 @@ const offline: CheckoutError = { error: "erro", message: "Sem conexão. Nada foi
 
 export async function getQuote(req: QuoteRequest): Promise<QuoteResponse | CheckoutError> {
   if (!STORE_CONNECTED) {
-    const t = computeTotals({ items: req.items, method: req.method, shipping: null });
-    return { lines: t.lines, issues: [], shippingOptions: req.cep?.replace(/\D/g, "").length === 8 ? tableShipping(t.subtotalCents) : null, subtotalCents: t.subtotalCents, couponCents: 0, pixCents: t.pixCents, coupon: req.coupon ? { code: req.coupon, ok: false, message: "Prévia: cupons funcionam com a loja conectada." } : null, freeShipping: t.freeShipping };
+    const cep = req.cep?.replace(/\D/g, "") ?? "";
+    const t = computeTotals({ items: req.items, method: req.method, shipping: null, cep: cep || null });
+    return {
+      lines: t.lines,
+      issues: [],
+      shippingOptions: cep.length === 8 ? tableShipping(t, cep) : null,
+      subtotalCents: t.subtotalCents,
+      bundleCents: t.bundleCents,
+      bundles: t.bundles,
+      benefitCents: t.benefitCents,
+      couponCents: 0,
+      pixCents: t.pixCents,
+      coupon: req.coupon ? { code: req.coupon, ok: false, message: "Prévia: cupons funcionam com a loja conectada." } : null,
+      freeShipping: t.freeShipping,
+    };
   }
   try {
     const r = await post<QuoteResponse | CheckoutError>("/api/checkout/quote", req);

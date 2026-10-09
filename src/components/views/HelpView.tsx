@@ -1,11 +1,15 @@
 import { BRAND } from "@/lib/brand";
-import { brl, COMMERCE, FREE_SHIPPING_FROM, getDrop, PIX_DISCOUNT, shipsLabel, SITE } from "@/lib/catalog";
+import { COMMERCE, getDrop, PIX_DISCOUNT, shipsLabel, SITE } from "@/lib/catalog";
+import { BUILD_TIME } from "@/lib/clock";
+import { freeShippingCondition } from "@/lib/commerce/benefits";
+
+const SHIPPING = freeShippingCondition(BUILD_TIME);
 
 const drop = getDrop("001")!;
 
 export default function HelpView() {
   const blocks: [string, string, React.ReactNode][] = [
-    ["envio", "Envio e prazos", <>Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento aprovado, com código de rastreio por e-mail. Frete grátis na opção econômica acima de {brl(FREE_SHIPPING_FROM)}. O prazo da transportadora aparece no checkout depois do CEP.</>],
+    ["envio", "Envio e prazos", <>Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento aprovado, com código de rastreio por e-mail. {SHIPPING ? `${SHIPPING}. ` : ""}O prazo da transportadora aparece no checkout depois do CEP.</>],
     ["pre-venda", "Pré-venda", <>Antes da abertura do drop, a compra é de pré-venda: você paga na hora, garante a peça numerada e o pedido inteiro sai a partir de {drop.shipsFrom ? shipsLabel(drop.shipsFrom) : "data informada na página"}. Desistiu antes do envio? Reembolso integral, pelo mesmo meio de pagamento.</>],
     ["trocas", "Trocas e devoluções", <>A primeira troca de tamanho é por nossa conta, em até {COMMERCE.exchangeDays} dias depois de receber. Você também tem 7 dias para desistir da compra (Código de Defesa do Consumidor), com reembolso integral. Peça de drop esgotada pode não ter outro tamanho para troca: nesse caso, devolvemos o valor.</>],
     ["pagamento", "Pagamento", <>Pix com {Math.round(PIX_DISCOUNT * 100)}% de desconto ou cartão de crédito em até {COMMERCE.installments}x{COMMERCE.installmentsInterestFree ? " sem juros" : ""}. O pagamento acontece no ambiente seguro do processador: a {BRAND.name} não vê nem guarda os dados do seu cartão.</>],

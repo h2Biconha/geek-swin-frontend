@@ -62,3 +62,13 @@ export function adminAlertMail(subject: string, text: string): Mail | null {
   if (!env.adminEmail) return null;
   return { to: env.adminEmail, tag: "admin", subject: `[${BRAND.name}] ${subject}`, text, html: layout(subject, `<p>${esc(text)}</p>`) };
 }
+
+export function restockMail(o: { to: string; product: string; size: string; link: string; unsubscribe: string }): Mail {
+  return {
+    to: o.to,
+    tag: "restock",
+    subject: `${o.product} · ${o.size} voltou · ${BRAND.name}`,
+    text: `O tamanho ${o.size} de ${o.product} voltou ao estoque. Não reservamos peça: vale para quem chegar primeiro.\n${o.link}\n\nNão quer mais avisos? ${o.unsubscribe}`,
+    html: layout(`${o.product} voltou`, `<p>O tamanho <strong>${esc(o.size)}</strong> voltou ao estoque. Não reservamos peça: vale para quem chegar primeiro.</p>${button(o.link, "Ver a peça")}<p style="font-size:12px;color:#5e5e64">Você pediu este aviso na página da peça. <a href="${esc(o.unsubscribe)}" style="color:#5e5e64">Não quero mais avisos</a>.</p>`),
+  };
+}

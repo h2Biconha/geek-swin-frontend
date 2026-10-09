@@ -4,8 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useHydrated } from "@/lib/store";
-import { cart, countItems, freeShippingGap, lastAdded, lineProblem, maxQtyFor, subtotal, useCart } from "@/lib/cart";
-import { asset, brl, COMMERCE, FREE_SHIPPING_FROM, getDrop, getProduct, installment, shipsLabel } from "@/lib/catalog";
+import { cart, countItems, lastAdded, lineKey, lineProblem, maxQtyFor, useCart, type CartItem } from "@/lib/cart";
+import { asset, brl, COMMERCE, getDrop, getProduct, installment, shipsLabel } from "@/lib/catalog";
+import { benefitProgress } from "@/lib/commerce/benefits";
+import { getBundle } from "@/lib/commerce/bundles";
+import { computeTotals } from "@/lib/commerce/pricing";
+import { useNow } from "@/lib/time";
+import BenefitBar from "../commerce/BenefitBar";
+import CartSuggestions from "../commerce/CartSuggestions";
 import { itemPayload, track } from "@/lib/analytics";
 import { useInventoryMap } from "@/lib/inventory";
 import { useDropPhase } from "@/lib/time";
@@ -37,10 +43,22 @@ export default function CartDrawer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const now = useNow(60_000);
   const count = countItems(items);
-  const sub = subtotal(items);
-  const gap = freeShippingGap(items);
-  const blocked = items.some((i) => lineProblem(i, stock?.[i.slug]));
+  // mesma função de preço do checkout: soma, desconto de kit (quando houver) e frete grátis
+  const t = computeTotals({ items, method: "card", shipping: null, now });
+  const sub = t.subtotalCents / 100;
+  const total = (t.subtotalCents - t.bundleCents) / 100;
+  const ship = benefitProgress(t.lines, now).find((b) => b.kind === "free_shipping");
+  const blocked = items.some((i) => lineProblem(i, stock?.[i.slug], items));
+  // linhas avulsas e grupos de kit, na ordem em que entraram
+  const groups: { kitId: string | null; lines: CartItem[] }[] = [];
+  for (const i of items) {
+    const g = i.kitId ? groups.find((x) => x.kitId === i.kitId) : undefined;
+    if (g) g.lines.push(i);
+    else groups.push({ kitId: i.kitId ?? null, lines: [i] });
+  }
+  const findMore = () => document.getElementById("cart-sugestoes")?.focus();
   const presale = phase === "presale" && items.some((i) => getProduct(i.slug)?.drop === drop.number);
 
   return (
@@ -54,15 +72,22 @@ export default function CartDrawer() {
             <dl className="num grid grid-cols-[1fr_auto] gap-y-1.5 text-small">
               <dt className="text-muted">Subtotal</dt>
               <dd>{brl(sub)}</dd>
+              {t.bundleCents > 0 && (
+                <>
+                  <dt className="text-muted">Desconto de kit</dt>
+                  <dd className="text-accent-fg">−{brl(t.bundleCents / 100)}</dd>
+                </>
+              )}
               <dt className="text-muted">Frete</dt>
-              <dd>{gap === 0 ? <span className="text-accent-fg">Grátis</span> : "Calculado no checkout"}</dd>
+              <dd>{ship?.reached && ship.region !== false ? <span className="text-accent-fg">Grátis no Econômico{ship.region === null ? "*" : ""}</span> : "Calculado no checkout"}</dd>
               <dt className="mt-2 font-semibold">Total</dt>
-              <dd className="mt-2 font-semibold">{brl(sub)}</dd>
+              <dd className="mt-2 font-semibold">{brl(total)}</dd>
               <dd className="col-span-2 text-muted">
-                ou até {COMMERCE.installments}x de {installment(sub)}
+                ou até {COMMERCE.installments}x de {installment(total)}
                 {COMMERCE.installmentsInterestFree ? " sem juros" : ""} no cartão
               </dd>
             </dl>
+            {ship?.reached && ship.region === null && <p className="text-small text-muted">* {ship.condition} Confirmado no CEP.</p>}
             {presale && drop.shipsFrom && <p className="text-small text-muted">Tem peça de pré-venda: o pedido inteiro sai a partir de {shipsLabel(drop.shipsFrom)}.</p>}
             {blocked && (
               <p role="alert" className="field-error mt-0">
@@ -106,29 +131,49 @@ export default function CartDrawer() {
         </div>
       ) : (
         <>
-          <div className="border-b border-line px-5 py-4">
-            <p className="text-small">
-              {gap > 0 ? (
-                <>
-                  Faltam <strong className="num">{brl(gap)}</strong> para o frete grátis.
-                </>
-              ) : (
-                <>Frete grátis desbloqueado.</>
-              )}
-            </p>
-            <div className="mt-2.5 h-[2px] bg-line" role="progressbar" aria-valuemin={0} aria-valuemax={FREE_SHIPPING_FROM} aria-valuenow={Math.min(sub, FREE_SHIPPING_FROM)} aria-label="Progresso para frete grátis">
-              <div className="h-full origin-left bg-accent transition-transform duration-500 ease-out" style={{ transform: `scaleX(${Math.min(1, sub / FREE_SHIPPING_FROM)})` }} />
+          {ship || t.bundles.length ? (
+            <div className="border-b border-line px-5 py-4">
+              <BenefitBar lines={t.lines} onFind={findMore} />
             </div>
-          </div>
+          ) : null}
           <ul>
-            {items.map((i) => {
+            {groups.map((g) => {
+              const kit = g.kitId ? getBundle(g.lines[0].kit) : undefined;
+              const check = g.kitId ? t.bundles.find((b) => b.kitId === g.kitId) : undefined;
+              const lis = g.lines.map((i) => line(i));
+              return kit && g.kitId ? (
+                <li key={g.kitId} className="border-b border-line">
+                  <div className="flex items-baseline justify-between gap-3 px-5 pt-4">
+                    <p className="eyebrow text-fg">
+                      Kit · {kit.name}
+                      {check?.discountCents ? <span className="text-accent-fg"> · −{brl(check.discountCents / 100)}</span> : null}
+                    </p>
+                    <button type="button" onClick={() => cart.removeKit(g.kitId!)} className="eyebrow min-h-11 text-muted hover:text-fg" aria-label={`Remover o kit ${kit.name}`}>
+                      <span className="link-u">Remover kit</span>
+                    </button>
+                  </div>
+                  {check && !check.valid && <p className="px-5 text-small text-muted">Kit incompleto: as peças seguem com o preço normal.</p>}
+                  <ul>{lis}</ul>
+                </li>
+              ) : (
+                lis
+              );
+            })}
+          </ul>
+          <CartSuggestions items={items} gapCents={ship && !ship.reached ? ship.gapCents : null} id="cart-sugestoes" />
+        </>
+      )}
+    </Drawer>
+  );
+
+  function line(i: CartItem) {
               const p = getProduct(i.slug)!;
-              const problem = lineProblem(i, stock?.[i.slug]);
+              const problem = lineProblem(i, stock?.[i.slug], items);
               const out = problem === "esgotado";
-              const max = maxQtyFor(i, stock?.[i.slug]);
-              const fresh = lastAdded === `${i.slug}|${i.size}`;
+              const max = maxQtyFor(i, stock?.[i.slug], items);
+              const fresh = lastAdded === lineKey(i);
               return (
-                <li key={`${i.slug}-${i.size}`} className={`flex gap-4 border-b border-line px-5 py-5 ${fresh ? "animate-[rise_.4s_var(--ease-out)]" : ""}`}>
+                <li key={lineKey(i)} className={`flex gap-4 border-b border-line px-5 py-5 last:border-b-0 ${fresh ? "animate-[rise_.4s_var(--ease-out)]" : ""}`}>
                   <Link href={`/product/${p.slug}`} onClick={closeOverlay} className="studio relative h-28 w-22 shrink-0">
                     <img src={asset(p.media[0].src)} alt="" className="size-full object-contain p-2" />
                   </Link>
@@ -148,27 +193,22 @@ export default function CartDrawer() {
                     )}
                     <div className="mt-auto flex items-center justify-between pt-3">
                       <div className="flex items-center border border-line" role="group" aria-label={`Quantidade de ${p.name}`}>
-                        <button type="button" onClick={() => cart.setQty(i.slug, i.size, i.qty - 1)} className="grid size-11 place-items-center" aria-label={i.qty === 1 ? `Remover ${p.name}` : `Diminuir quantidade de ${p.name}`}>
+                        <button type="button" onClick={() => cart.setQty(i.slug, i.size, i.qty - 1, i.kitId)} className="grid size-11 place-items-center" aria-label={i.qty === 1 ? `Remover ${p.name}` : `Diminuir quantidade de ${p.name}`}>
                           <Icon name="minus" size={14} />
                         </button>
                         <span className="num w-7 text-center text-small" aria-live="polite">
                           {i.qty}
                         </span>
-                        <button type="button" disabled={i.qty >= max || out} onClick={() => cart.setQty(i.slug, i.size, i.qty + 1)} className="grid size-11 place-items-center disabled:opacity-30" aria-label={`Aumentar quantidade de ${p.name}`}>
+                        <button type="button" disabled={i.qty >= max || out || !!i.kitId} onClick={() => cart.setQty(i.slug, i.size, i.qty + 1, i.kitId)} className="grid size-11 place-items-center disabled:opacity-30" aria-label={`Aumentar quantidade de ${p.name}`}>
                           <Icon name="plus" size={14} />
                         </button>
                       </div>
-                      <button type="button" onClick={() => cart.remove(i.slug, i.size)} className="eyebrow min-h-11 text-muted hover:text-fg" aria-label={`Remover ${p.name}, tamanho ${i.size}`}>
+                      <button type="button" onClick={() => cart.remove(i.slug, i.size, i.kitId)} className="eyebrow min-h-11 text-muted hover:text-fg" aria-label={`Remover ${p.name}, tamanho ${i.size}`}>
                         <span className="link-u">Remover</span>
                       </button>
                     </div>
                   </div>
                 </li>
               );
-            })}
-          </ul>
-        </>
-      )}
-    </Drawer>
-  );
+  }
 }

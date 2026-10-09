@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { cart } from "@/lib/cart";
 import { BRAND } from "@/lib/brand";
 import { favFor, favSizes } from "@/lib/account";
-import { brl, categoryName, COMMERCE, dateLabel, dropTitle, FREE_SHIPPING_FROM, shipsLabel, sizeOut, SPECS_CONFIRMED, timeLabel, type Product } from "@/lib/catalog";
+import { availability, brl, categoryHref, categoryName, COMMERCE, dateLabel, dropTitle, shipsLabel, sizeOut, SPECS_CONFIRMED, timeLabel, type Product } from "@/lib/catalog";
+import { freeShippingCondition } from "@/lib/commerce/benefits";
+import { useEarlyAccess } from "@/lib/early";
+import { useNow } from "@/lib/time";
 import { itemPayload, track } from "@/lib/analytics";
 import Accordion from "../ui/Accordion";
 import Countdown from "../ui/Countdown";
@@ -19,7 +22,13 @@ import WishlistButton from "./WishlistButton";
 import { useAvailability } from "./status";
 
 export default function BuyBox({ product: p }: { product: Product }) {
-  const { status, phase, drop, inv } = useAvailability(p);
+  const { status: rawStatus, phase, drop, inv } = useAvailability(p);
+  const now = useNow(60_000);
+  const shipping = freeShippingCondition(now);
+  // acesso antecipado: o botão só libera para conta elegível (o servidor confere de novo no checkout)
+  const early = phase === "early-access" && drop?.earlyAccess ? drop : null;
+  const eligible = useEarlyAccess(early?.number ?? null);
+  const status = early && eligible ? availability(p, "live", inv) : rawStatus;
   const soldOut = p.sizes.filter((s) => sizeOut(inv, s));
   const [picked, setSize] = useState<string | null>(null);
   // peça de tamanho único já vem escolhida; senão, o tamanho salvo em "Minha conta > Tamanhos" (se existir e não estiver esgotado)
@@ -68,13 +77,16 @@ export default function BuyBox({ product: p }: { product: Product }) {
             <span className="text-fg">Linha Core</span>
           )}
           <span>N° {p.number}</span>
-          <span>{categoryName(p.category)}</span>
+          <Link href={categoryHref(p.category)} className="link-u">
+            {categoryName(p.category)}
+          </Link>
         </p>
         <h1 className="font-display mt-4 text-d3">{p.name}</h1>
         <p className="mt-3 text-small text-muted">
           {p.color} · {p.specs}
           {!SPECS_CONFIRMED && " (em validação)"}
         </p>
+        {p.maker && !p.maker.authored && <p className="mt-2 text-small text-muted">Produto {p.maker.brand}, vendido pela {BRAND.name}.</p>}
       </div>
 
       <Price product={p} size="lg" showInstallments />
@@ -86,6 +98,20 @@ export default function BuyBox({ product: p }: { product: Product }) {
           <strong className="eyebrow mb-1 block text-fg">Pré-venda aberta</strong>
           O drop abre {dateLabel(drop.opensAtUTC)} às {timeLabel(drop.opensAtUTC)}. Quem compra agora garante a peça e recebe a partir de {shipsLabel(drop.shipsFrom)}. O número da sua peça é definido na confirmação do pagamento.
         </p>
+      )}
+
+      {early && (
+        <div className="border-l-2 border-accent pl-4 text-small text-muted">
+          <strong className="eyebrow mb-1 block text-fg">Acesso antecipado</strong>
+          {eligible
+            ? "Sua conta está na lista: a compra está liberada antes da abertura geral."
+            : `Até ${dateLabel(early.opensAtUTC!)} às ${timeLabel(early.opensAtUTC!)}, só ${early.earlyAccess!.audience === "customers" ? "quem já comprou" : "quem está na lista"} compra. `}
+          {!eligible && (
+            <Link href={`/account?next=${encodeURIComponent(`/product/${p.slug}`)}`} className="link-u text-fg">
+              Entrar com o e-mail da lista
+            </Link>
+          )}
+        </div>
       )}
 
       {status === "coming-soon" && drop?.opensAtUTC && (
@@ -146,7 +172,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
 
       <ul className="grid gap-3 text-small text-muted">
         <li className="flex items-center gap-3">
-          <Icon name="truck" size={18} /> Frete econômico grátis acima de {brl(FREE_SHIPPING_FROM)}
+          <Icon name="truck" size={18} /> {shipping ?? "Frete calculado pelo CEP no checkout"}
         </li>
         <li className="flex items-center gap-3">
           <Icon name="refresh" size={18} /> Primeira troca de tamanho por nossa conta · 7 dias para desistir
@@ -159,6 +185,37 @@ export default function BuyBox({ product: p }: { product: Product }) {
       <Accordion
         items={[
           { title: "A peça", content: <p>{p.description}</p> },
+          ...(p.maker
+            ? [
+                {
+                  title: "Ficha técnica e garantia",
+                  content: (
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-small">
+                      <dt className="text-muted">Fabricante</dt>
+                      <dd>{p.maker.brand}</dd>
+                      {p.maker.warranty && (
+                        <>
+                          <dt className="text-muted">Garantia</dt>
+                          <dd>{p.maker.warranty}</dd>
+                        </>
+                      )}
+                      {!!p.maker.compatibility?.length && (
+                        <>
+                          <dt className="text-muted">Compatível com</dt>
+                          <dd>{p.maker.compatibility.join(", ")}</dd>
+                        </>
+                      )}
+                      {p.maker.specs?.map(([k, v]) => (
+                        <div key={k} className="contents">
+                          <dt className="text-muted">{k}</dt>
+                          <dd>{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ),
+                },
+              ]
+            : []),
           {
             title: "Tecido e construção",
             content: (
@@ -188,7 +245,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
             title: "Envio e trocas",
             content: (
               <p>
-                Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento (pré-venda: a partir da data informada). Frete econômico grátis acima de {brl(FREE_SHIPPING_FROM)}. A primeira troca de tamanho, em até {COMMERCE.exchangeDays} dias, é por conta da {BRAND.name}, e você tem 7 dias depois de receber para desistir da compra.{" "}
+                Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento (pré-venda: a partir da data informada). {shipping ? `${shipping}. ` : ""}A primeira troca de tamanho, em até {COMMERCE.exchangeDays} dias, é por conta da {BRAND.name}, e você tem 7 dias depois de receber para desistir da compra.{" "}
                 <Link href="/help" className="link-u text-fg">
                   Tudo sobre envio e trocas
                 </Link>

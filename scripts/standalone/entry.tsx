@@ -8,11 +8,13 @@ import AppShell from "@/components/layout/AppShell";
 import Footer from "@/components/layout/Footer";
 import AboutView from "@/components/views/AboutView";
 import AccountView from "@/components/views/AccountView";
+import CategoryView from "@/components/views/CategoryView";
 import CheckoutView from "@/components/views/CheckoutView";
 import DropView from "@/components/views/DropView";
 import DropsView from "@/components/views/DropsView";
 import HelpView from "@/components/views/HelpView";
 import HomeView from "@/components/views/HomeView";
+import LoadoutView from "@/components/views/LoadoutView";
 import LegalView from "@/components/views/LegalView";
 import NotFoundView from "@/components/views/NotFoundView";
 import ProductView from "@/components/views/ProductView";
@@ -20,6 +22,7 @@ import ShopView from "@/components/views/ShopView";
 import WishlistView from "@/components/views/WishlistView";
 import { BRAND } from "@/lib/brand";
 import { dropTitle, getDrop, getProduct } from "@/lib/catalog";
+import { getListing } from "@/lib/merch/listings";
 import { takeFragment, usePath } from "./router";
 
 type Route = { page: React.ReactNode; title: string };
@@ -36,8 +39,14 @@ function route(path: string): Route {
     terms: { el: () => <LegalView doc="terms" />, name: "Termos de uso" },
     help: { el: () => <HelpView />, name: "Ajuda" },
     checkout: { el: () => <CheckoutView />, name: "Checkout" },
+    loadout: { el: () => <LoadoutView />, name: "Monte o seu loadout" },
   };
   if (!b && simple[a]) return { page: simple[a].el(), title: `${simple[a].name} · ${BRAND.name}` };
+  if (a === "shop" && b) {
+    // mesmos atalhos do next.config (redirects)
+    const l = getListing(({ camisas: "camisetas", bone: "bones" } as Record<string, string>)[b] ?? b);
+    if (l) return { page: <CategoryView key={l.slug} listing={l} />, title: `${l.seoTitle} · ${BRAND.name}` };
+  }
   if (a === "drops" && !b) return { page: <DropsView />, title: `Drops · ${BRAND.name}` };
   if (a === "drops" && b) {
     const d = getDrop(b);

@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "./fixtures";
 
-const PAGES = ["/", "/shop", "/product/obsidian-shell-hoodie", "/drops", "/drops/001-insert-coin", "/about", "/help", "/privacy", "/terms", "/checkout", "/account", "/wishlist", "/nao-existe"];
+const PAGES = ["/", "/shop", "/shop/camisetas", "/shop/bermudas", "/shop/novidades", "/loadout", "/product/obsidian-shell-hoodie", "/drops", "/drops/001-insert-coin", "/about", "/help", "/privacy", "/terms", "/checkout", "/account", "/wishlist", "/nao-existe"];
 
 test.describe("acessibilidade (axe, WCAG 2.2 AA)", () => {
   for (const path of PAGES) {
@@ -96,7 +96,7 @@ test.describe("teclado", () => {
 
   test("tamanho com setas, bag abre e fecha com Esc", async ({ page }) => {
     await page.goto("/product/ggwp-core-tee");
-    const group = page.getByRole("radiogroup");
+    const group = page.getByRole("radiogroup", { name: /^Tamanho/ });
     await group.getByRole("radio").first().focus();
     await page.keyboard.press("ArrowRight");
     await expect(group.getByRole("radio", { name: "M" })).toHaveAttribute("aria-checked", "true");
@@ -110,12 +110,21 @@ test.describe("teclado", () => {
 });
 
 test.describe("loja", () => {
-  test("filtro e ordenação ficam na URL e sobrevivem ao recarregar", async ({ page }) => {
-    await page.goto("/shop?categoria=camisetas&ordem=menor");
+  test("link antigo /shop?categoria= vai para a página da categoria", async ({ page }) => {
+    await page.goto("/shop?categoria=calcas");
+    await expect(page).toHaveURL(/\/shop\/calcas/);
+    await expect(page.getByRole("heading", { level: 1, name: "Calças" })).toBeVisible();
+  });
+
+  test("categoria: filtro e ordenação ficam na URL e sobrevivem ao recarregar", async ({ page }) => {
+    await page.goto("/shop/camisetas");
+    await page.getByRole("combobox", { name: /Ordenar/ }).selectOption("menor");
+    await expect(page).toHaveURL(/ordem=menor/);
     await page.reload();
-    await expect(page).toHaveURL(/categoria=camisetas/);
-    const prices = (await page.locator("main span", { hasText: /^Preço: R\$/ }).allTextContents()).map((t) => Number(t.replace(/[^\d,]/g, "").replace(",", ".")));
-    expect(prices.length).toBeGreaterThan(0);
+    await expect(page).toHaveURL(/ordem=menor/);
+    const grid = page.getByRole("region", { name: "Peças" });
+    const prices = (await grid.locator("span", { hasText: /^Preço: R\$/ }).allTextContents()).map((t) => Number(t.replace(/[^\d,]/g, "").replace(",", ".")));
+    expect(prices.length).toBeGreaterThan(1);
     expect([...prices].sort((x, y) => x - y)).toEqual(prices);
   });
 

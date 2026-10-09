@@ -1,3 +1,4 @@
+import { currentCustomer } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { storeRoute } from "@/server/http";
 import { createOrder } from "@/server/orders";
@@ -17,7 +18,9 @@ export const POST = storeRoute(
     const { items, invalid } = normalizeItems(parsed.data.items);
     if (invalid.length || !items.length) return json({ error: "sem_estoque", message: "Uma peça da bag não existe mais. Revise a bag.", issues: invalid.map((i) => ({ ...i, reason: "inexistente" })) }, 409);
     const key = req.headers.get("idempotency-key");
-    const r = await createOrder({ ...parsed.data, items }, key && /^[\w-]{16,80}$/.test(key) ? key : null);
+    // sessão (link mágico): só importa no acesso antecipado de um drop, conferido em createOrder
+    const viewer = await currentCustomer(db);
+    const r = await createOrder({ ...parsed.data, items }, key && /^[\w-]{16,80}$/.test(key) ? key : null, viewer?.email ?? null);
     return r.ok ? json(r.body, 201) : json(r.body, r.status);
   },
   { mutate: true },

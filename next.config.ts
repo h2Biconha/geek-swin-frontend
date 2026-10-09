@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import catalog from "./src/lib/catalog.json";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -56,6 +57,10 @@ const nextConfig: NextConfig = {
       { source: "/carrinho", destination: "/checkout", permanent: true },
       { source: "/members", destination: "/#lista", permanent: true },
       { source: "/arquivo", destination: "/drops#arquivo", permanent: true },
+      // categorias ganharam página própria: links antigos com filtro de uma categoria vão para ela
+      { source: "/shop", has: [{ type: "query", key: "categoria", value: `(?<cat>${catalog.categories.map((c) => c.slug).join("|")})` }], destination: "/shop/:cat", permanent: false },
+      { source: "/shop/camisas", destination: "/shop/camisetas", permanent: true },
+      { source: "/shop/bone", destination: "/shop/bones", permanent: true },
     ];
   },
 };

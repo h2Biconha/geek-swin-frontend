@@ -1,5 +1,5 @@
 import "server-only";
-import { COMMERCE, dropPhase, getDrop, getProduct, isPurchasablePhase } from "@/lib/catalog";
+import { COMMERCE, dropPhase, getDrop, getProduct, isPurchasablePhase, type Drop } from "@/lib/catalog";
 import { computeTotals, type ShippingQuote } from "@/lib/commerce/pricing";
 import type { CartLine, CheckoutCreated, CheckoutError, LineIssue, OrderStatus, OrderView, PixData, QuoteResponse } from "@/lib/commerce/types";
 import { findCoupon } from "./coupons";
@@ -16,52 +16,88 @@ import type { CheckoutInput } from "./validation";
 export const orderToken = (id: string) => hmac(`order:${id}`).slice(0, 40);
 export const checkOrderToken = (id: string, token: string | null) => !!token && safeEqual(orderToken(id), token);
 
-/** peças fora de venda agora (drop ainda não abriu, encerrado, esgotado) */
-function phaseIssues(items: CartLine[], now = Date.now()): LineIssue[] {
-  return items.flatMap((i): LineIssue[] => {
+/**
+ * Acesso antecipado: o e-mail da SESSÃO (link mágico = dono do e-mail) precisa ser elegível.
+ * list: está na lista (fontes do drop, sem descadastro) · customers: já tem pedido pago.
+ */
+export async function earlyAccessEligible(sql: Sql, d: Drop, email: string | null | undefined): Promise<boolean> {
+  const ea = d.earlyAccess;
+  if (!ea?.enabled || !email) return false;
+  if (ea.audience === "customers") return (await sql.query("select 1 from orders where email = $1 and status in ('paid','shipped','delivered') limit 1", [email])).length > 0;
+  const sources = ea.sources?.length ? ea.sources : null;
+  return (await sql.query("select 1 from subscribers where email = $1 and unsubscribed_at is null and ($2::text[] is null or source = any($2)) limit 1", [email, sources])).length > 0;
+}
+
+/** peças fora de venda agora (drop ainda não abriu, encerrado, esgotado, acesso antecipado sem elegibilidade) */
+async function phaseIssues(sql: Sql, items: CartLine[], viewerEmail: string | null, now = Date.now()): Promise<LineIssue[]> {
+  const out: LineIssue[] = [];
+  const eligible = new Map<string, boolean>();
+  for (const i of items) {
     const p = getProduct(i.slug);
-    if (!p) return [{ slug: i.slug, size: i.size, reason: "inexistente" as const }];
+    if (!p) {
+      out.push({ slug: i.slug, size: i.size, reason: "inexistente" });
+      continue;
+    }
     const d = p.drop ? getDrop(p.drop) : undefined;
-    return d && !isPurchasablePhase(dropPhase(d, now)) ? [{ slug: i.slug, size: i.size, reason: "indisponivel" as const }] : [];
-  });
+    if (!d) continue;
+    const phase = dropPhase(d, now);
+    if (phase === "early-access") {
+      if (!eligible.has(d.number)) eligible.set(d.number, await earlyAccessEligible(sql, d, viewerEmail));
+      if (!eligible.get(d.number)) out.push({ slug: i.slug, size: i.size, reason: "acesso_antecipado" });
+    } else if (!isPurchasablePhase(phase)) out.push({ slug: i.slug, size: i.size, reason: "indisponivel" });
+  }
+  return out;
 }
 
 async function stockIssues(sql: Sql, items: CartLine[]): Promise<LineIssue[]> {
   const inv = await readInventory(sql, items.map((i) => i.slug));
   const issues: LineIssue[] = [];
-  // a tiragem é compartilhada entre os tamanhos da mesma peça
+  // a tiragem é compartilhada entre os tamanhos da mesma peça; o tamanho, entre as linhas avulsas e de kit
   const editionUse = new Map<string, number>();
+  const sizeUse = new Map<string, number>();
   for (const i of items) {
     const v = inv[i.slug];
     const size = v?.sizes[i.size];
     const usedEd = (editionUse.get(i.slug) ?? 0) + i.qty;
     editionUse.set(i.slug, usedEd);
+    const usedSize = (sizeUse.get(`${i.slug}|${i.size}`) ?? 0) + i.qty;
+    sizeUse.set(`${i.slug}|${i.size}`, usedSize);
     const sizeLeft = size === undefined ? 0 : size;
     if (sizeLeft === 0 || v?.editionLeft === 0) issues.push({ slug: i.slug, size: i.size, reason: "esgotado", available: 0 });
-    else if ((sizeLeft != null && sizeLeft < i.qty) || (v?.editionLeft != null && v.editionLeft < usedEd))
-      issues.push({ slug: i.slug, size: i.size, reason: "quantidade", available: Math.min(sizeLeft ?? Infinity, (v?.editionLeft ?? Infinity) - (usedEd - i.qty)) });
+    else if ((sizeLeft != null && sizeLeft < usedSize) || (v?.editionLeft != null && v.editionLeft < usedEd))
+      issues.push({ slug: i.slug, size: i.size, reason: "quantidade", available: Math.max(0, Math.min((sizeLeft ?? Infinity) - (usedSize - i.qty), (v?.editionLeft ?? Infinity) - (usedEd - i.qty))) });
   }
   return issues;
 }
+
+const dropPhaseOf = (slug: string) => {
+  const p = getProduct(slug);
+  const d = p?.drop ? getDrop(p.drop) : undefined;
+  return d ? dropPhase(d, Date.now()) : undefined;
+};
 
 export function linesFrom(items: CartLine[]) {
   return computeTotals({ items, method: "card", shipping: null }).lines;
 }
 
-/** Cotação: preço, frete, cupom e problemas de estoque. Não reserva nada. */
-export async function quote(input: { items: CartLine[]; cep?: string; method: "pix" | "card"; coupon?: string }): Promise<QuoteResponse> {
+/** Cotação: preço, kits, benefícios, frete, cupom e problemas de estoque. Não reserva nada. */
+export async function quote(input: { items: CartLine[]; cep?: string; method: "pix" | "card"; coupon?: string }, viewerEmail: string | null = null): Promise<QuoteResponse> {
   const db = await getDb();
   await releaseExpired(db);
-  const issues = [...phaseIssues(input.items), ...(await stockIssues(db, input.items))];
-  const base = computeTotals({ items: input.items, method: input.method, shipping: null });
-  const c = await findCoupon(db, input.coupon, base.subtotalCents);
-  const t = computeTotals({ items: input.items, method: input.method, shipping: null, coupon: c?.coupon });
-  const shippingOptions = input.cep && input.cep.replace(/\D/g, "").length === 8 ? await quoteShipping(input.cep.replace(/\D/g, ""), input.items, t.subtotalCents) : null;
+  const cep = input.cep?.replace(/\D/g, "") ?? "";
+  const issues = [...(await phaseIssues(db, input.items, viewerEmail)), ...(await stockIssues(db, input.items))];
+  const base = computeTotals({ items: input.items, method: input.method, shipping: null, cep: cep || null });
+  const c = await findCoupon(db, input.coupon, base.subtotalCents - base.bundleCents);
+  const t = computeTotals({ items: input.items, method: input.method, shipping: null, coupon: c?.coupon, cep: cep || null });
+  const shippingOptions = cep.length === 8 ? await quoteShipping(cep, input.items, t) : null;
   return {
     lines: t.lines,
     issues,
     shippingOptions,
     subtotalCents: t.subtotalCents,
+    bundleCents: t.bundleCents,
+    bundles: t.bundles,
+    benefitCents: t.benefitCents,
     couponCents: t.couponCents,
     pixCents: t.pixCents,
     coupon: c ? { code: input.coupon!.toUpperCase(), ok: c.ok, message: c.message } : null,
@@ -72,7 +108,7 @@ export async function quote(input: { items: CartLine[]; cep?: string; method: "p
 type Created = { ok: true; body: CheckoutCreated } | { ok: false; status: number; body: CheckoutError };
 
 /** Cria o pedido: valida, recalcula tudo no servidor, reserva o estoque e cria o pagamento. */
-export async function createOrder(input: CheckoutInput & { items: CartLine[] }, idempotencyKey: string | null): Promise<Created> {
+export async function createOrder(input: CheckoutInput & { items: CartLine[] }, idempotencyKey: string | null, viewerEmail: string | null = null): Promise<Created> {
   const db = await getDb();
 
   if (idempotencyKey) {
@@ -81,16 +117,24 @@ export async function createOrder(input: CheckoutInput & { items: CartLine[] }, 
   }
 
   await releaseExpired(db);
-  const blocked = phaseIssues(input.items);
-  if (blocked.length) return { ok: false, status: 409, body: { error: "fora_de_venda", message: "Uma peça da bag não está à venda agora.", issues: blocked } };
+  const blocked = await phaseIssues(db, input.items, viewerEmail);
+  if (blocked.length) {
+    const early = blocked.some((b) => b.reason === "acesso_antecipado");
+    return { ok: false, status: 409, body: { error: "fora_de_venda", message: early ? "Essa peça está em acesso antecipado: entre com o e-mail da lista para comprar." : "Uma peça da bag não está à venda agora.", issues: blocked } };
+  }
+  // no acesso antecipado, o pedido sai no e-mail de quem é elegível (o da sessão)
+  if (viewerEmail && blocked.length === 0 && input.items.some((i) => dropPhaseOf(i.slug) === "early-access") && input.customer.email !== viewerEmail)
+    return { ok: false, status: 400, body: { error: "dados_invalidos", message: "No acesso antecipado, use o mesmo e-mail da sua conta.", fields: { "customer.email": "Use o e-mail da sua conta." } } };
 
-  const base = computeTotals({ items: input.items, method: input.payment.method, shipping: null });
-  const options = await quoteShipping(input.address.cep, input.items, base.subtotalCents);
+  const cep = input.address.cep;
+  const base = computeTotals({ items: input.items, method: input.payment.method, shipping: null, cep });
+  const c = await findCoupon(db, input.coupon, base.subtotalCents - base.bundleCents);
+  if (input.coupon && !c?.ok) return { ok: false, status: 400, body: { error: "dados_invalidos", message: c?.message ?? "Cupom inválido.", fields: { coupon: c?.message ?? "Cupom inválido." } } };
+  const withCoupon = computeTotals({ items: input.items, method: input.payment.method, shipping: null, coupon: c?.coupon, cep });
+  const options = await quoteShipping(cep, input.items, withCoupon);
   const ship: ShippingQuote | undefined = options.find((o) => o.id === input.shippingId);
   if (!ship) return { ok: false, status: 400, body: { error: "dados_invalidos", message: "Escolha o frete de novo: as opções mudaram.", fields: { shippingId: "Frete inválido." } } };
-  const c = await findCoupon(db, input.coupon, base.subtotalCents);
-  if (input.coupon && !c?.ok) return { ok: false, status: 400, body: { error: "dados_invalidos", message: c?.message ?? "Cupom inválido.", fields: { coupon: c?.message ?? "Cupom inválido." } } };
-  const t = computeTotals({ items: input.items, method: input.payment.method, shipping: ship, coupon: c?.coupon });
+  const t = computeTotals({ items: input.items, method: input.payment.method, shipping: ship, coupon: c?.coupon, cep });
 
   const presaleDrop = input.items.map((i) => getProduct(i.slug)!).map((p) => (p.drop ? getDrop(p.drop) : undefined)).find((d) => d && dropPhase(d, Date.now()) === "presale");
   const reservedUntil = new Date(Date.now() + COMMERCE.reservationMinutes * 60_000);
@@ -102,8 +146,8 @@ export async function createOrder(input: CheckoutInput & { items: CartLine[] }, 
       const id = `GS-${String(n).padStart(6, "0")}`;
       await sql.query(
         `insert into orders (id, access_hash, idempotency_key, status, email, customer, address, shipping, subtotal_cents, shipping_cents, discount_cents, total_cents,
-           coupon, payment_method, installments, provider, presale, ships_from, reserved_until)
-         values ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+           coupon, payment_method, installments, provider, presale, ships_from, reserved_until, discount_detail)
+         values ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
         [
           id,
           sha256(orderToken(id)),
@@ -123,9 +167,23 @@ export async function createOrder(input: CheckoutInput & { items: CartLine[] }, 
           !!presaleDrop,
           presaleDrop?.shipsFrom ?? null,
           reservedUntil.toISOString(),
+          JSON.stringify({ bundleCents: t.bundleCents, bundles: t.bundles.filter((b) => b.valid), benefitCents: t.benefitCents, benefitId: t.benefitId, couponCents: t.couponCents, pixCents: t.pixCents }),
         ],
       );
-      for (const l of t.lines) await sql.query("insert into order_items (order_id, product_slug, size, qty, unit_cents, name) values ($1,$2,$3,$4,$5,$6)", [id, l.slug, l.size, l.qty, l.unitCents, l.name]);
+      let line = 0;
+      for (const l of t.lines)
+        await sql.query("insert into order_items (order_id, line, product_slug, size, qty, unit_cents, name, kit, kit_id, discount_cents) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)", [
+          id,
+          ++line,
+          l.slug,
+          l.size,
+          l.qty,
+          l.unitCents,
+          l.name,
+          l.kit ?? null,
+          l.kitId ?? null,
+          l.discountCents,
+        ]);
       const issues = await reserve(sql, input.items);
       if (issues.length) throw Object.assign(new Error("sem_estoque"), { issues });
       return id;
@@ -269,8 +327,8 @@ const iso = (d: string | Date | null) => (d == null ? null : new Date(d).toISOSt
 export async function getOrderView(sql: Sql, id: string): Promise<OrderView | null> {
   const [o] = await sql.query<OrderRow>("select * from orders where id = $1", [id]);
   if (!o) return null;
-  const items = await sql.query<{ product_slug: string; size: string; qty: number; name: string; unit_cents: number; edition_from: number | null; edition_to: number | null }>(
-    "select * from order_items where order_id = $1 order by product_slug, size",
+  const items = await sql.query<{ product_slug: string; size: string; qty: number; name: string; unit_cents: number; discount_cents: number; kit: string | null; edition_from: number | null; edition_to: number | null }>(
+    "select * from order_items where order_id = $1 order by line",
     [id],
   );
   const a = o.address;
@@ -282,7 +340,7 @@ export async function getOrderView(sql: Sql, id: string): Promise<OrderView | nu
     paidAt: iso(o.paid_at),
     email: o.email,
     customerName: o.customer.name,
-    items: items.map((i) => ({ slug: i.product_slug, size: i.size, qty: i.qty, name: i.name, unitCents: i.unit_cents, editionFrom: i.edition_from, editionTo: i.edition_to })),
+    items: items.map((i) => ({ slug: i.product_slug, size: i.size, qty: i.qty, name: i.name, unitCents: i.unit_cents, discountCents: i.discount_cents, kit: i.kit, editionFrom: i.edition_from, editionTo: i.edition_to })),
     subtotalCents: o.subtotal_cents,
     discountCents: o.discount_cents,
     shippingCents: o.shipping_cents,

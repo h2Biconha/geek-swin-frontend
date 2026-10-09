@@ -4,7 +4,13 @@ import { COMMERCE, getProduct } from "@/lib/catalog";
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone, isValidUf, onlyDigits } from "@/lib/validate";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
-const line = z.object({ slug: z.string().max(80), size: z.string().max(20), qty: z.number().int().min(1).max(COMMERCE.maxQtyPerLine) });
+const line = z.object({
+  slug: z.string().max(80),
+  size: z.string().max(20),
+  qty: z.number().int().min(1).max(COMMERCE.maxQtyPerLine),
+  kit: z.string().regex(/^[a-z0-9-]{2,40}$/).optional(),
+  kitId: z.string().regex(/^[a-z0-9]{4,16}$/).optional(),
+});
 export const itemsSchema = z.array(line).min(1).max(20);
 
 export const quoteSchema = z.object({
@@ -38,17 +44,19 @@ export const checkoutSchema = z.object({
 });
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 
-/** junta linhas repetidas e confere se produto e tamanho existem */
-export function normalizeItems(items: { slug: string; size: string; qty: number }[]) {
-  const map = new Map<string, { slug: string; size: string; qty: number }>();
+type Item = { slug: string; size: string; qty: number; kit?: string; kitId?: string };
+/** junta linhas repetidas (mesma peça, tamanho e kit) e confere se produto e tamanho existem */
+export function normalizeItems(items: Item[]) {
+  const map = new Map<string, Item>();
   const invalid: { slug: string; size: string }[] = [];
-  for (const i of items) {
+  for (const raw of items) {
+    const i: Item = raw.kit && raw.kitId ? { slug: raw.slug, size: raw.size, qty: raw.qty, kit: raw.kit, kitId: raw.kitId } : { slug: raw.slug, size: raw.size, qty: raw.qty };
     const p = getProduct(i.slug);
     if (!p || !p.sizes.includes(i.size)) {
       invalid.push({ slug: i.slug, size: i.size });
       continue;
     }
-    const k = `${i.slug}|${i.size}`;
+    const k = `${i.slug}|${i.size}|${i.kitId ?? ""}`;
     const cur = map.get(k);
     map.set(k, { ...i, qty: Math.min((cur?.qty ?? 0) + i.qty, COMMERCE.maxQtyPerLine) });
   }

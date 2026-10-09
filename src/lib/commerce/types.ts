@@ -1,7 +1,8 @@
 /** Tipos do checkout, compartilhados entre navegador e servidor. Contrato em BACKEND.md > Checkout. */
 export type PaymentMethod = "pix" | "card";
 
-export type CartLine = { slug: string; size: string; qty: number };
+/** linha do carrinho. kit/kitId: a peça entrou como parte de um kit (o servidor confere a composição e o desconto) */
+export type CartLine = { slug: string; size: string; qty: number; kit?: string; kitId?: string };
 
 export type CheckoutCustomer = { email: string; name: string; cpf: string; phone: string };
 export type CheckoutAddress = { cep: string; street: string; number: string; complement?: string; district: string; city: string; state: string };
@@ -19,13 +20,18 @@ export type CheckoutPayload = {
 
 export type QuoteRequest = { items: CartLine[]; cep?: string; method: PaymentMethod; coupon?: string };
 
-export type LineIssue = { slug: string; size: string; reason: "esgotado" | "quantidade" | "indisponivel" | "inexistente"; available?: number };
+export type LineIssue = { slug: string; size: string; reason: "esgotado" | "quantidade" | "indisponivel" | "inexistente" | "acesso_antecipado"; available?: number };
 
 export type QuoteResponse = {
-  lines: { slug: string; size: string; qty: number; name: string; unitCents: number; lineCents: number }[];
+  lines: { slug: string; size: string; qty: number; name: string; unitCents: number; lineCents: number; kit?: string; kitId?: string; discountCents: number }[];
   issues: LineIssue[];
   shippingOptions: { id: string; name: string; days: string; priceCents: number }[] | null;
   subtotalCents: number;
+  /** desconto de kits válidos e conferência de cada kit (inválido = sem desconto, com o motivo) */
+  bundleCents: number;
+  bundles: { kit: string; kitId: string; name: string; valid: boolean; discountCents: number; reason?: string }[];
+  /** benefício progressivo de desconto aplicado */
+  benefitCents: number;
   couponCents: number;
   pixCents: number;
   coupon: { code: string; ok: boolean; message: string } | null;
@@ -65,7 +71,7 @@ export type OrderView = {
   paidAt: string | null;
   email: string;
   customerName: string;
-  items: { slug: string; size: string; qty: number; name: string; unitCents: number; editionFrom: number | null; editionTo: number | null }[];
+  items: { slug: string; size: string; qty: number; name: string; unitCents: number; discountCents: number; kit: string | null; editionFrom: number | null; editionTo: number | null }[];
   subtotalCents: number;
   discountCents: number;
   shippingCents: number;

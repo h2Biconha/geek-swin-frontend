@@ -1,7 +1,9 @@
+/** navegação principal. "Loja" abre o mega menu no desktop e um acordeão no celular. */
 export const NAV = [
-  { label: "Loja", href: "/shop" },
+  { label: "Loja", href: "/shop", mega: true },
+  { label: "Novidades", href: "/shop/novidades" },
   { label: "Drops", href: "/drops" },
-  { label: "Sobre", href: "/about" },
+  { label: "Loadout", href: "/loadout" },
 ] as const;
 
 /** páginas que começam com hero escuro: o header fica transparente sobre ele no topo */

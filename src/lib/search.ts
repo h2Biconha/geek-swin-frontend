@@ -1,4 +1,4 @@
-import { CATEGORIES, DROPS, PRODUCTS, categoryName, dropTitle, type Product } from "./catalog";
+import { CATEGORIES, DROPS, PRODUCTS, categoryHref, categoryName, dropTitle, type Product } from "./catalog";
 
 /**
  * Busca local, instantânea, sem acento e sem diferença de maiúscula.
@@ -10,7 +10,7 @@ const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCa
 /** a peça bate com a busca? (nome, categoria, cor, drop e descrição, sem acento) */
 export function matchesQuery(p: Product, q: string) {
   const terms = norm(q).split(/\s+/).filter(Boolean);
-  const hay = norm([p.name, p.specs, p.color, categoryName(p.category), p.drop ? `drop ${p.drop}` : "core", p.description].join(" "));
+  const hay = norm([p.name, p.specs, p.color, categoryName(p.category), ...p.categories.map(categoryName), ...Object.values(p.attrs), ...p.tags, p.drop ? `drop ${p.drop}` : "core", p.description].join(" "));
   return terms.every((t) => hay.includes(t));
 }
 
@@ -21,7 +21,7 @@ export async function searchCatalog(q: string): Promise<SearchResults> {
   return {
     products: PRODUCTS.filter((p) => matchesQuery(p, q)).slice(0, 6),
     drops: DROPS.filter((d) => hit(`drop ${d.number} ${d.name ?? ""} ${d.tagline}`)).map((d) => ({ href: `/drops/${d.slug}`, label: `DROP ${d.number} · ${dropTitle(d)}`, sub: d.tagline })),
-    categories: CATEGORIES.filter((c) => hit(c.name)).map((c) => ({ href: `/shop?categoria=${c.slug}`, label: c.name })),
+    categories: CATEGORIES.filter((c) => hit(`${c.name} ${c.seoTitle}`)).map((c) => ({ href: categoryHref(c.slug), label: c.name })),
   };
 }
 

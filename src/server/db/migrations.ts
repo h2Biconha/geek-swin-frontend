@@ -135,4 +135,35 @@ create table if not exists rate_limits (
 );
 `,
   },
+  {
+    id: "002_kits_alertas",
+    sql: `
+-- linhas do pedido: a mesma peça/tamanho pode vir avulsa e dentro de um kit (chave passa a ser a linha)
+alter table order_items add column if not exists line integer;
+-- kit: slug do kit (catalog.json > bundles) · kit_id: instância do kit no pedido · discount_cents: desconto de kit rateado na linha
+alter table order_items add column if not exists kit text;
+alter table order_items add column if not exists kit_id text;
+alter table order_items add column if not exists discount_cents integer not null default 0;
+update order_items oi set line = n.rn
+  from (select order_id, product_slug, size, row_number() over (partition by order_id order by product_slug, size) as rn from order_items) n
+  where oi.order_id = n.order_id and oi.product_slug = n.product_slug and oi.size = n.size and oi.line is null;
+alter table order_items drop constraint if exists order_items_pkey;
+alter table order_items alter column line set not null;
+alter table order_items add primary key (order_id, line);
+
+-- composição do desconto do pedido (auditoria): kit, benefício, cupom, Pix
+alter table orders add column if not exists discount_detail jsonb;
+
+-- "avise-me quando voltar": um pedido de aviso por e-mail + peça + tamanho
+create table if not exists stock_alerts (
+  email text not null,
+  product_slug text not null,
+  size text not null default '',
+  created_at timestamptz not null default now(),
+  notified_at timestamptz,
+  primary key (email, product_slug, size)
+);
+create index if not exists stock_alerts_pending_idx on stock_alerts (product_slug, size) where notified_at is null;
+`,
+  },
 ];

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
-import { CATEGORIES, SITE } from "@/lib/catalog";
+import { categoryHref, SITE } from "@/lib/catalog";
+import { navCategories } from "@/lib/merch/listings";
 import Lobby from "../sections/Lobby";
 import ConsentLink from "./ConsentLink";
 
 const COLS: [string, [string, string][]][] = [
-  ["Loja", [["Tudo", "/shop"], ...CATEGORIES.map((c) => [c.name, `/shop?categoria=${c.slug}`] as [string, string])]],
-  ["Marca", [["Drops", "/drops"], ["Arquivo", "/drops#arquivo"], ["Sobre", "/about"], ["Lista do drop", "/#lista"]]],
+  ["Loja", [["Tudo", "/shop"], ["Novidades", "/shop/novidades"], ...navCategories().map((c) => [c.name, categoryHref(c.slug)] as [string, string]), ["Linha Core", "/shop/core"]]],
+  ["Marca", [["Drops", "/drops"], ["Loadout", "/loadout"], ["Arquivo", "/drops#arquivo"], ["Sobre", "/about"], ["Lista do drop", "/#lista"]]],
   ["Ajuda", [["Envio e prazos", "/help#envio"], ["Trocas e devoluções", "/help#trocas"], ["Pré-venda", "/help#pre-venda"], ["Contato", "/help#contato"]]],
   ["Legal", [["Privacidade", "/privacy"], ["Termos de uso", "/terms"]]],
 ];

@@ -9,10 +9,10 @@ export type FavSizes = { top?: string; bottom?: string; socks?: string };
 export const favSizes = createLocalStore<FavSizes>("gs-sizes", {});
 export const favFor = (sizeTable: string, fav: FavSizes) => (sizeTable === "top" || sizeTable === "bottom" || sizeTable === "socks" ? fav[sizeTable] : undefined);
 
-export type Me = { customer: { email: string; name: string | null } | null; orders: OrderView[] };
+export type Me = { customer: { email: string; name: string | null } | null; orders: OrderView[]; earlyAccess?: string[] };
 
 export async function fetchMe(): Promise<Me | "erro"> {
-  if (!STORE_CONNECTED) return { customer: null, orders: [] };
+  if (!STORE_CONNECTED) return { customer: null, orders: [], earlyAccess: [] };
   try {
     const r = await fetch("/api/me", { cache: "no-store" });
     if (!r.ok) return "erro";

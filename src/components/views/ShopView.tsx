@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { availability, CATEGORIES, categoryName, dropPhase, DROPS, getDrop, PRODUCTS, sizeOut, type Product } from "@/lib/catalog";
+import { availability, categoryName, dropPhase, DROPS, getDrop, inCategory, PRODUCTS, sizeOut, type Product } from "@/lib/catalog";
+import { navCategories } from "@/lib/merch/listings";
 import { itemPayload, track } from "@/lib/analytics";
 import { useInventoryMap } from "@/lib/inventory";
 import { matchesQuery } from "@/lib/search";
@@ -59,6 +60,8 @@ export default function ShopView() {
 
   useEffect(() => {
     const on = () => setF(fromURL());
+    // navegação no cliente: o Next só atualiza a URL no commit, depois do 1º render desta página
+    on();
     window.addEventListener("popstate", on);
     window.addEventListener("hashchange", on);
     window.addEventListener("gs:query", on);
@@ -86,7 +89,7 @@ export default function ShopView() {
     const r = PRODUCTS.filter(
       (p) =>
         (!f.q || matchesQuery(p, f.q)) &&
-        (!f.categoria.length || f.categoria.includes(p.category)) &&
+        (!f.categoria.length || f.categoria.some((c) => inCategory(p, c))) &&
         (!f.tamanho.length || f.tamanho.some((s) => p.sizes.includes(s) && !sizeOut(stock?.[p.slug], s))) &&
         (!f.preco.length || PRICES.some(([k, , fn]) => f.preco.includes(k) && fn(p.price))) &&
         (!f.drop || (f.drop === "core" ? !p.drop : p.drop === f.drop)) &&
@@ -140,7 +143,7 @@ export default function ShopView() {
       <fieldset>
         <legend className="eyebrow mb-3 text-muted">Categoria</legend>
         <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.map((c) => (
+          {navCategories().map((c) => (
             <Chip key={c.slug} on={f.categoria.includes(c.slug)} onClick={() => toggle("categoria", c.slug)}>
               {c.name}
             </Chip>

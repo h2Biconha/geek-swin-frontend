@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import Icon from "./Icon";
 
 /**
  * Gaveta lateral (carrinho, menu, filtros). Fecha com Esc, clique fora ou botão.
  * Trava o scroll do fundo e prende o foco dentro enquanto aberta.
+ * Vai para o <body> (portal): dentro de um bloco com transform/animação, "fixed" ficaria preso a ele.
  */
 export default function Drawer({ open, onClose, title, side = "right", children, footer, labelledBy }: { open: boolean; onClose: () => void; title: React.ReactNode; side?: "right" | "left"; children: React.ReactNode; footer?: React.ReactNode; labelledBy?: string }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ export default function Drawer({ open, onClose, title, side = "right", children,
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+  return createPortal(
     <>
       <div className="scrim" onClick={onClose} aria-hidden />
       <div
@@ -67,6 +69,7 @@ export default function Drawer({ open, onClose, title, side = "right", children,
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
         {footer && <div className="shrink-0 border-t border-line px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</div>}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }

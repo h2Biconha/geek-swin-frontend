@@ -1,27 +1,23 @@
 import Link from "next/link";
-import { categoryName, dropTitle, getDrop, getProduct, PRODUCTS, type Product } from "@/lib/catalog";
+import { categoryHref, categoryName, dropTitle, getDrop, roleOf, type Product } from "@/lib/catalog";
+import { alternatives, collectionMates } from "@/lib/merch/recommend";
 import BuyBox from "../product/BuyBox";
+import CompleteTheLook from "../product/CompleteTheLook";
 import ProductGallery from "../product/ProductGallery";
+import ProductKits from "../product/ProductKits";
 import ProductRail from "../product/ProductRail";
 import Reviews from "../sections/Reviews";
 import Breadcrumbs from "../ui/Breadcrumbs";
 
-/** "Complete o look": quem divide look com a peça primeiro, depois o resto. */
-function related(p: Product, n = 4) {
-  const looks = p.drop ? (getDrop(p.drop)?.looks ?? []) : [];
-  const fromLooks = looks.filter((l) => l.products.includes(p.slug)).flatMap((l) => l.products);
-  return [...new Set([...fromLooks, ...PRODUCTS.map((q) => q.slug)])]
-    .filter((s) => s !== p.slug)
-    .slice(0, n)
-    .map((s) => getProduct(s)!);
-}
-
 export default function ProductView({ product: p }: { product: Product }) {
   const drop = p.drop ? getDrop(p.drop) : undefined;
+  const mates = collectionMates(p, 4);
+  // alternativas só do mesmo papel e fora da coleção já mostrada acima
+  const alts = roleOf(p) === "pack" ? [] : alternatives(p, 4).filter((q) => !mates.includes(q));
   return (
     <>
-      <div className="wrap pt-5 pb-section lg:pt-8">
-        <Breadcrumbs items={[["Loja", "/shop"], [categoryName(p.category), `/shop?categoria=${p.category}`], [p.name]]} />
+      <div className="wrap pt-5 lg:pt-8">
+        <Breadcrumbs items={[["Loja", "/shop"], [categoryName(p.category), categoryHref(p.category)], [p.name]]} />
         <div className="mt-5 grid grid-cols-1 gap-8 *:min-w-0 lg:mt-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(22rem,1fr)] lg:gap-12 xl:gap-20">
           <div className="-mx-gutter lg:mx-0">
             <ProductGallery product={p} />
@@ -31,6 +27,9 @@ export default function ProductView({ product: p }: { product: Product }) {
           </div>
         </div>
       </div>
+
+      <CompleteTheLook product={p} />
+      <ProductKits slug={p.slug} />
 
       {drop && drop.story.length > 0 && (
         <section aria-labelledby="story-t" className="theme-dark grain relative overflow-hidden py-section">
@@ -57,19 +56,37 @@ export default function ProductView({ product: p }: { product: Product }) {
         </section>
       )}
 
-      <section aria-labelledby="look-t" className="wrap pt-section">
-        <div className="flex items-end justify-between gap-6" data-reveal>
-          <h2 id="look-t" className="font-display text-d3">
-            Complete o look
-          </h2>
-          <Link href="/shop" className="btn btn-ghost">
-            <span>Ver tudo</span>
-          </Link>
-        </div>
-        <div className="mt-10">
-          <ProductRail products={related(p)} />
-        </div>
-      </section>
+      {mates.length > 0 && (
+        <section aria-labelledby="mates-t" className="wrap pt-section">
+          <div className="flex items-end justify-between gap-6" data-reveal>
+            <h2 id="mates-t" className="font-display text-d3">
+              {drop ? `Mais do Drop ${drop.number}` : "Mais da linha Core"}
+            </h2>
+            <Link href={drop ? `/drops/${drop.slug}` : "/shop/core"} className="btn btn-ghost">
+              <span>Ver a coleção</span>
+            </Link>
+          </div>
+          <div className="mt-10">
+            <ProductRail products={mates} />
+          </div>
+        </section>
+      )}
+
+      {alts.length > 0 && (
+        <section aria-labelledby="alt-t" className="wrap pt-section">
+          <div className="flex items-end justify-between gap-6" data-reveal>
+            <h2 id="alt-t" className="font-display text-d3">
+              Mais em {categoryName(p.category)}
+            </h2>
+            <Link href={categoryHref(p.category)} className="btn btn-ghost">
+              <span>Ver {categoryName(p.category).toLowerCase()}</span>
+            </Link>
+          </div>
+          <div className="mt-10">
+            <ProductRail products={alts} />
+          </div>
+        </section>
+      )}
 
       <Reviews product={p.slug} />
     </>

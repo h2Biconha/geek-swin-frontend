@@ -96,7 +96,7 @@ async function availableFor(sql: Sql, l: CartLine): Promise<{ available: number 
  * Devolve false se não houver peça (pedido vai para revisão manual e estorno).
  */
 export async function commitOrder(sql: Sql, orderId: string, fromReservation: boolean): Promise<boolean> {
-  const items = await sql.query<{ product_slug: string; size: string; qty: number }>("select product_slug, size, qty from order_items where order_id = $1 order by product_slug, size", [orderId]);
+  const items = await sql.query<{ line: number; product_slug: string; size: string; qty: number }>("select line, product_slug, size, qty from order_items where order_id = $1 order by line", [orderId]);
   for (const i of items) {
     const inv = fromReservation
       ? await sql.query("update inventory set reserved = greatest(reserved - $3, 0), sold = sold + $3, updated_at = now() where product_slug = $1 and size = $2 returning 1", [i.product_slug, i.size, i.qty])
@@ -109,7 +109,7 @@ export async function commitOrder(sql: Sql, orderId: string, fromReservation: bo
     if (hasEdition && !ed.length) return false;
     if (ed.length) {
       const to = ed[0].sold;
-      await sql.query("update order_items set edition_from = $4, edition_to = $5 where order_id = $1 and product_slug = $2 and size = $3", [orderId, i.product_slug, i.size, to - i.qty + 1, to]);
+      await sql.query("update order_items set edition_from = $3, edition_to = $4 where order_id = $1 and line = $2", [orderId, i.line, to - i.qty + 1, to]);
     }
   }
   return true;

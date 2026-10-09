@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { brl, dateLabel, FREE_SHIPPING_FROM, getDrop, shipsLabel, SITE, timeLabel } from "@/lib/catalog";
-import { useDropPhase } from "@/lib/time";
+import { dateLabel, getDrop, shipsLabel, SITE, timeLabel } from "@/lib/catalog";
+import { freeShippingCondition } from "@/lib/commerce/benefits";
+import { useDropPhase, useNow } from "@/lib/time";
 
 const drop = getDrop("001")!;
 
@@ -13,6 +14,7 @@ const drop = getDrop("001")!;
  */
 export default function AnnouncementBar() {
   const phase = useDropPhase(drop);
+  const shipping = freeShippingCondition(useNow(60_000));
   const [note, setNote] = useState(false);
   const opens = drop.opensAtUTC;
   const msg: { text: string; href?: string } =
@@ -22,7 +24,9 @@ export default function AnnouncementBar() {
         ? { text: `Drop ${drop.number} abre ${dateLabel(opens)} às ${timeLabel(opens)} · entre na lista`, href: "/#lista" }
         : phase === "live"
           ? { text: `Drop ${drop.number} · ${drop.name ?? ""} está aberto`, href: `/drops/${drop.slug}` }
-          : { text: `Frete grátis acima de ${brl(FREE_SHIPPING_FROM)}` };
+          : shipping
+            ? { text: shipping }
+            : { text: "Novidades toda semana na loja", href: "/shop/novidades" };
   return (
     <div className="theme-dark relative z-[51] border-b border-line">
       <div className="wrap flex h-9 items-center justify-center gap-3">

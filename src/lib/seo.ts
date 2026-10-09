@@ -1,5 +1,6 @@
 import { BRAND, SITE_URL } from "./brand";
 import { availability, dropPhase, dropTitle, type Drop, type Product } from "./catalog";
+import type { ListingDef } from "./merch/listings";
 
 /**
  * Dados estruturados (schema.org). Renderizados como <script type="application/ld+json">.
@@ -60,4 +61,18 @@ export const dropLd = (d: Drop) => ({
   name: `Drop ${d.number} · ${dropTitle(d)}`,
   description: d.concept,
   url: abs(`/drops/${d.slug}`),
+});
+
+/** página de categoria/coleção: CollectionPage com a lista de peças (ItemList) */
+export const listingLd = (l: ListingDef, products: Product[]) => ({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: l.seoTitle,
+  description: l.description,
+  url: abs(`/shop/${l.slug}`),
+  mainEntity: {
+    "@type": "ItemList",
+    numberOfItems: products.length,
+    itemListElement: products.map((p, i) => ({ "@type": "ListItem", position: i + 1, url: abs(`/product/${p.slug}`), name: p.name })),
+  },
 });

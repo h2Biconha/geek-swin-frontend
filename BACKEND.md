@@ -44,11 +44,15 @@ src/server/auth.ts           link mágico, sessão (cookie httpOnly), admin
 src/server/security.ts       hash/HMAC, mesma origem (CSRF), rate limit, leitura de JSON com limite
 src/server/http.ts           storeRoute(): 503 em prévia, 403 fora da origem, 500 sem vazar detalhe
 src/server/validation.ts     zod: checkout, cotação, itens
+src/server/alerts.ts         "avise-me quando voltar": pedidos de aviso, disparo ao repor estoque, demanda
 src/lib/commerce/pricing.ts  cálculo de preço PURO, usado no navegador (prévia) e no servidor (autoridade)
+src/lib/commerce/bundles.ts  kits (STARTER LOADOUT, FULL LOOK, SETUP DROP): conferência e desconto
+src/lib/commerce/benefits.ts benefícios progressivos (frete grátis, desconto por valor), região por CEP
+src/lib/merch/               listagens/filtros, looks (Complete o look), recomendações
 src/lib/catalog.json         catálogo e regras comerciais (commerce.*)
 ```
 
-Novo drop ou peça: edite `src/lib/catalog.json` (formato em `src/lib/catalog.ts`). Páginas, sitemap, busca, filtros, estoque (`syncCatalog`) e JSON-LD se ajustam sozinhos. A fase do drop (em breve, pré-venda, próximo, ao vivo, esgotado, arquivo) é calculada pelas datas e pelo estoque real (`dropPhase`), com `status` opcional para forçar.
+Como cadastrar categoria, peça, look, kit ou benefício: `docs/CATALOGO.md`. Novo drop ou peça: edite `src/lib/catalog.json` (formato em `src/lib/catalog.ts`). Páginas, sitemap, busca, filtros, estoque (`syncCatalog`) e JSON-LD se ajustam sozinhos. A fase do drop (em breve, pré-venda, próximo, ao vivo, esgotado, arquivo) é calculada pelas datas e pelo estoque real (`dropPhase`), com `status` opcional para forçar.
 
 ## 4. Rotas
 
@@ -61,21 +65,24 @@ Novo drop ou peça: edite `src/lib/catalog.json` (formato em `src/lib/catalog.ts
 | `/api/orders/:id?t=token` | GET | visão do pedido. Token do link OU sessão com o mesmo e-mail; senão 404. Se pendente, consulta o gateway (no máximo a cada 15 s) |
 | `/api/webhooks/mercadopago` | POST | valida `x-signature`, deduplica, **consulta a API** e aplica o estado |
 | `/api/dev/mock-payment` | POST | só `test` + `mock`: simula aprovado/recusado |
-| `/api/subscribe` | POST | lista (201 novo, 200 já estava). Honeypot `website`, rate limit, grava data e texto do consentimento |
+| `/api/subscribe` | POST | lista (201 novo, 200 já estava). Honeypot `website`, rate limit, grava data e texto do consentimento. `source: "avise-me"` + `product` também cria o pedido de aviso de volta ao estoque |
 | `/api/unsubscribe` | POST | sai da lista com token assinado (página `/unsubscribe`) |
 | `/api/auth/link` | POST | envia link mágico (15 min, uso único) |
 | `/api/auth/callback?token=` | GET | troca o link por sessão (cookie `gs_session`, 30 dias) |
-| `/api/auth/logout` · `/api/me` | POST · GET | sair · cliente e pedidos (inclusive os feitos antes de criar conta, pelo e-mail) |
+| `/api/auth/logout` · `/api/me` | POST · GET | sair · cliente, pedidos (inclusive os feitos antes de criar conta, pelo e-mail) e `earlyAccess` (drops em acesso antecipado liberados para esse e-mail) |
 | `/api/admin/session` | POST/DELETE | entrar/sair do painel (cookie `gs_admin`, 12 h) |
 | `/api/admin/orders` · `/api/admin/orders/:id` | GET · PATCH | lista; `ship` (com rastreio), `deliver`, `cancel` (pendente), `note` |
-| `/api/admin/inventory` | GET/PATCH | estoque bruto; define estoque físico por tamanho (não aceita abaixo de vendido + reservado) |
+| `/api/admin/inventory` | GET/PATCH | estoque bruto + demanda (avisos pendentes, inscritos por origem); define estoque físico por tamanho (não aceita abaixo de vendido + reservado). Ao repor, dispara os "avise-me" daquele tamanho e devolve `notified` |
 
 Toda rota que muda estado exige `Origin` igual ao site (CSRF). Erro inesperado responde 500 genérico; o detalhe fica só no log, sem dados do comprador.
 
 ## 5. Regras de dinheiro e estoque
 
 - **Preço vem do catálogo, nunca do navegador.** O cliente manda `slug`, `size`, `qty`; o servidor recalcula com `computeTotals()`. Teste: `tests/integration/orders.test.ts > preço enviado pelo navegador é ignorado`.
-- Centavos inteiros. Ordem: subtotal → cupom → desconto Pix (só sobre itens, não sobre frete) → frete.
+- Centavos inteiros. Ordem: subtotal → desconto de kit → benefício por valor **ou/e** cupom (se a regra não acumula, vale o maior) → desconto Pix (só sobre itens, não sobre frete) → frete.
+- **Kit**: o carrinho manda `kit` e `kitId` em cada linha do grupo. O servidor confere se as linhas formam exatamente o kit (uma peça por espaço, quantidade do espaço, kit ativo e no prazo). Só então aplica `discount` (se houver) e rateia por linha (`order_items.discount_cents`). Kit inválido ou incompleto: peças seguem com preço cheio. Kit não tem estoque próprio: cada peça reserva o seu, na mesma transação (tudo ou nada).
+- **Benefícios** (`commerce.benefits`): calculados pela mesma função pura no navegador e no servidor. Frete grátis vale só na opção configurada, com valor mínimo sobre as peças elegíveis (já com desconto de kit) e, se houver `regions`, só com CEP elegível. Nada aparece se `enabled` for false ou fora do prazo.
+- **Acesso antecipado** (`drops[].earlyAccess`): entre `opensAtUTC` do acesso e a abertura geral, o checkout só aceita quem está logado (link mágico) com e-mail elegível (`list`: inscrito nas fontes indicadas e não descadastrado; `customers`: já tem pedido pago), e o pedido sai nesse mesmo e-mail. Sem login, 409 `fora_de_venda`.
 - Duas travas, ambas por `UPDATE ... WHERE disponível >= qtd` (atômico, sem corrida):
   - `inventory` por tamanho: `stock` null = **produção sob demanda** (sem limite físico, caso de Savvy Print/Dimona). Número = unidades físicas.
   - `editions` por peça de drop: teto da tiragem numerada (`edition` no catálogo).
@@ -118,7 +125,8 @@ Passo a passo:
 ## 8. Pendências que não são código
 
 - Confirmar com a produção (Savvy Print/Dimona ou outra): composição, gramatura, medidas, prazo. Depois, `site.specsConfirmed: true` no catálogo (tira os avisos "em validação").
-- Confirmar regras comerciais em `catalog.json > commerce`: troca em 30 dias, frete grátis acima de R$ 349, 6x sem juros, 5% no Pix, tabela de frete, prazo de postagem (`handlingDays`) e envio do Drop 001 a partir de 14/10.
+- Confirmar regras comerciais em `catalog.json > commerce`: troca em 30 dias, frete grátis (hoje: `commerce.benefits > frete-gratis`, R$ 349, opção Econômico, Brasil todo), 6x sem juros, 5% no Pix, tabela de frete, prazo de postagem (`handlingDays`) e envio do Drop 001 a partir de 14/10.
+- Decidir (todos nascem desligados): desconto dos kits (`bundles[].discount`), desconto por valor de pedido (benefício `discount`), acesso antecipado do próximo drop (`earlyAccess`).
 - Tiragens (`edition`) do Drop 001: hoje 150 / 300 / 200 / 200. Confirme antes de abrir; depois de vender, só aumente.
 - Dados da empresa em `src/lib/brand.ts`: CNPJ, razão social, WhatsApp, e-mail. Encarregado de dados (LGPD) na política de privacidade.
 - Revisão jurídica de `/privacy` e `/terms` (marcados como versão preliminar).
@@ -131,15 +139,18 @@ Passo a passo:
 - Envio de campanhas para a lista: exporte `subscribers` com `unsubscribed_at is null` para a ferramenta de e-mail marketing e inclua o link de descadastro (`unsubscribeLink()`).
 - Estorno pelo painel (hoje: estorne no Mercado Pago; o webhook muda o pedido para `refunded`).
 - Cupons pelo painel (hoje: SQL, exemplo em `src/server/coupons.ts`).
-- Favoritos e tamanhos salvos no servidor (hoje ficam no navegador).
+- Favoritos e tamanhos salvos no servidor (hoje ficam no navegador). O "avise-me" já é no servidor.
+- Programa de pontos: não existe de propósito (sem regra real definida).
 
 ## 10. Testes
 
 ```bash
 npm test          # unidade + integração (PGlite em memória, Mercado Pago simulado): preço, fases do drop,
-                  # validações, assinatura do webhook, reserva, idempotência, tiragem, expiração, rotas
+                  # validações, assinatura do webhook, reserva, idempotência, tiragem, expiração, rotas,
+                  # kits, benefícios por valor/região/prazo, acesso antecipado, avise-me, integridade do catalog.json
 npm run e2e       # navegador (Playwright) contra build de produção em modo teste: compra com Pix de teste,
-                  # peça esgotada, busca vazia, formulário inválido, teclado, axe (WCAG 2.2 AA), SEO, 375 a 1920 px
+                  # peça esgotada, busca vazia, formulário inválido, teclado, axe (WCAG 2.2 AA), SEO, 375 a 1920 px,
+                  # mega menu, páginas de categoria, Complete o look, Loadout, bag com benefício e sugestões, menu do celular
 npm run check     # lint + tipos + testes + build
 ```
 

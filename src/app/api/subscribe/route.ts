@@ -4,6 +4,7 @@ import { isValidEmail, isValidWhatsapp, onlyDigits } from "@/lib/validate";
 import { getDb } from "@/server/db";
 import { storeRoute } from "@/server/http";
 import { ipKey, json, rateLimit, readJson } from "@/server/security";
+import { addStockAlert } from "@/server/alerts";
 import { addSubscriber } from "@/server/subscribers";
 
 const schema = z.object({
@@ -29,6 +30,8 @@ export const POST = storeRoute(
     const d = p.data;
     const product = d.product && getProduct(d.product) ? d.product : undefined;
     const isNew = await addSubscriber(db, { email: d.email, source: d.source, whatsapp: d.whatsapp ? onlyDigits(d.whatsapp) : undefined, product, size: product ? d.size : undefined });
+    // aviso de volta ao estoque: guarda peça + tamanho (vários por pessoa)
+    if (d.source === "avise-me" && product) await addStockAlert(db, d.email, product, product && getProduct(product)?.sizes.includes(d.size ?? "") ? d.size : undefined);
     return json({ ok: true }, isNew ? 201 : 200);
   },
   { mutate: true },

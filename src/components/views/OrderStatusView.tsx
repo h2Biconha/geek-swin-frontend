@@ -7,9 +7,13 @@ import { BRAND } from "@/lib/brand";
 import { brl, getProduct } from "@/lib/catalog";
 import { fetchOrder } from "@/lib/commerce/checkout";
 import type { OrderView } from "@/lib/commerce/types";
-import { refreshInventory } from "@/lib/inventory";
+import { refreshInventory, useInventoryMap } from "@/lib/inventory";
+import { suggestFor } from "@/lib/merch/recommend";
+import { getBundle } from "@/lib/commerce/bundles";
 import { STORE_CONNECTED } from "@/lib/mode";
 import { splitCountdown, useNow } from "@/lib/time";
+import ProductRail from "../product/ProductRail";
+import SignupForm from "../sections/SignupForm";
 import Icon from "../ui/Icon";
 
 /**
@@ -69,6 +73,34 @@ function PixBox({ order }: { order: OrderView }) {
           )}{" "}
           Esta página atualiza sozinha quando o pagamento for confirmado.
         </p>
+      </div>
+    </div>
+  );
+}
+
+/** Pós-compra: o pedido confirmado não muda. Só sugestões para a próxima compra e o convite opcional para a lista. */
+function AfterPurchase({ order }: { order: OrderView }) {
+  const stock = useInventoryMap() ?? undefined;
+  const now = useNow(60_000);
+  const picks = suggestFor(
+    order.items.map((i) => i.slug),
+    now,
+    stock,
+    4,
+  ).map((s) => s.product);
+  return (
+    <div className="mt-section grid gap-section">
+      {picks.length > 0 && (
+        <div>
+          <h2 className="eyebrow text-muted">Para o próximo look</h2>
+          <p className="mt-2 mb-6 max-w-[56ch] text-small text-muted">Peças que combinam com o que você levou. Sem pressa: o pedido acima já está fechado.</p>
+          <ProductRail products={picks} />
+        </div>
+      )}
+      <div className="max-w-xl border-t border-line pt-8">
+        <h2 className="eyebrow text-muted">Próximos drops</h2>
+        <p className="mt-2 mb-6 text-small text-muted">Quer saber quando abrir o próximo drop? Entre na lista. É opcional e você sai quando quiser.</p>
+        <SignupForm source="pos-compra" cta="Avisar dos próximos drops" />
       </div>
     </div>
   );
@@ -206,10 +238,11 @@ export default function OrderStatusView({ id, token }: { id: string; token: stri
         <div>
           <h2 className="eyebrow text-muted">Itens</h2>
           <ul className="mt-4 divide-y divide-line border-y border-line">
-            {order.items.map((i) => (
-              <li key={`${i.slug}-${i.size}`} className="flex justify-between gap-4 py-4 text-small">
+            {order.items.map((i, n) => (
+              <li key={n} className="flex justify-between gap-4 py-4 text-small">
                 <span>
                   {i.qty}× {i.name} · {i.size}
+                  {i.kit && <span className="eyebrow mt-1 block text-muted">Kit {getBundle(i.kit)?.name ?? i.kit}</span>}
                   {i.editionFrom != null && (
                     <span className="eyebrow mt-1 block text-accent-fg">
                       Peça nº {i.editionFrom === i.editionTo ? i.editionFrom : `${i.editionFrom} a ${i.editionTo}`}
@@ -250,6 +283,7 @@ export default function OrderStatusView({ id, token }: { id: string; token: stri
           </p>
         </div>
       </div>
+      {ok && <AfterPurchase order={order} />}
     </section>
   );
 }

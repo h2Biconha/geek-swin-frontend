@@ -8,7 +8,8 @@ import { useInventoryMap } from "./inventory";
  * Relógio compartilhado. As páginas são geradas no build, então no HTML (e na hidratação) vale a hora
  * do build (BUILD_TIME, igual no servidor e no navegador). Logo depois o navegador assume a hora real.
  */
-export const BUILD_TIME = Number(process.env.NEXT_PUBLIC_BUILD_TIME ?? 0) || Date.parse("2026-10-08T00:00:00Z");
+import { BUILD_TIME } from "./clock";
+export { BUILD_TIME };
 
 type Channel = { listeners: Set<() => void>; id?: ReturnType<typeof setInterval>; value: number; subscribe: (cb: () => void) => () => void; get: () => number };
 const channels = new Map<number, Channel>();

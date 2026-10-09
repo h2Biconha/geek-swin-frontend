@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { itemPayload, track } from "@/lib/analytics";
 import { BRAND } from "@/lib/brand";
-import { cart, lineProblem, useCart } from "@/lib/cart";
+import { cart, lineKey, lineProblem, useCart } from "@/lib/cart";
 import { asset, brl, COMMERCE, getProduct } from "@/lib/catalog";
 import { createCheckout, getQuote, isError, lookupCep } from "@/lib/commerce/checkout";
 import { installmentCents } from "@/lib/commerce/pricing";
@@ -93,6 +93,7 @@ const issueText = (i: LineIssue) => {
   if (i.reason === "esgotado") return `${name} (${i.size}) esgotou.`;
   if (i.reason === "quantidade") return `${name} (${i.size}): só ${i.available ?? 0} disponível.`;
   if (i.reason === "indisponivel") return `${name} ainda não está à venda.`;
+  if (i.reason === "acesso_antecipado") return `${name} está em acesso antecipado só para quem tem convite.`;
   return `${name} não existe mais na loja.`;
 };
 
@@ -124,7 +125,7 @@ export default function CheckoutView() {
   }, []);
   useEffect(() => writeSession(FORM_KEY, f), [f]);
 
-  const cartSig = items.map((i) => `${i.slug}:${i.size}:${i.qty}`).join("|");
+  const cartSig = items.map((i) => `${i.slug}:${i.size}:${i.qty}:${i.kitId ?? ""}`).join("|");
   const cep = onlyDigits(f.cep);
 
   // cotação no servidor: muda com a bag, o CEP, o método e o cupom
@@ -165,9 +166,13 @@ export default function CheckoutView() {
   const subtotalC = quote?.subtotalCents ?? 0;
   const couponC = quote?.couponCents ?? 0;
   const pixC = method === "pix" ? (quote?.pixCents ?? 0) : 0;
-  const totalC = subtotalC - couponC - pixC + (ship?.priceCents ?? 0);
+  const bundleC = quote?.bundleCents ?? 0;
+  const benefitC = quote?.benefitCents ?? 0;
+  const goodsC = subtotalC - bundleC - benefitC - couponC;
+  const totalC = goodsC - pixC + (ship?.priceCents ?? 0);
+  const brokenKits = (quote?.bundles ?? []).filter((b) => !b.valid);
   const issues = useMemo(() => quote?.issues ?? [], [quote]);
-  const blocked = issues.length > 0 || items.some((i) => lineProblem(i, stock?.[i.slug]));
+  const blocked = issues.length > 0 || items.some((i) => lineProblem(i, stock?.[i.slug], items));
 
   const go = (s: number) => {
     setStep(s);
@@ -260,7 +265,7 @@ export default function CheckoutView() {
           const p = getProduct(i.slug)!;
           const issue = issues.find((x) => x.slug === i.slug && x.size === i.size);
           return (
-            <li key={`${i.slug}-${i.size}`} className="flex gap-3">
+            <li key={lineKey(i)} className="flex gap-3">
               <span className="studio relative block h-20 w-16 shrink-0">
                 <img src={asset(p.media[0].src)} alt="" className="size-full object-contain p-1" />
                 <span className="num absolute -top-2 -right-2 grid size-5 place-items-center bg-fg font-mono text-[0.6875rem] text-bg" aria-hidden>
@@ -271,6 +276,7 @@ export default function CheckoutView() {
                 {p.name}
                 <span className="block text-muted">
                   Tam. {i.size} · {i.qty} {i.qty > 1 ? "unidades" : "unidade"}
+                  {i.kit && <> · kit</>}
                 </span>
                 {issue && <span className="field-error block">{issueText(issue)}</span>}
               </span>
@@ -302,6 +308,18 @@ export default function CheckoutView() {
       <dl className="num grid grid-cols-[1fr_auto] gap-y-2 border-t border-line pt-4 text-small" aria-busy={quoteState === "loading"}>
         <dt className="text-muted">Subtotal</dt>
         <dd>{quote ? brl(subtotalC / 100) : "…"}</dd>
+        {bundleC > 0 && (
+          <>
+            <dt className="text-muted">Desconto de kit</dt>
+            <dd className="text-accent-fg">−{brl(bundleC / 100)}</dd>
+          </>
+        )}
+        {benefitC > 0 && (
+          <>
+            <dt className="text-muted">Benefício</dt>
+            <dd className="text-accent-fg">−{brl(benefitC / 100)}</dd>
+          </>
+        )}
         {couponC > 0 && (
           <>
             <dt className="text-muted">Cupom</dt>
@@ -319,6 +337,11 @@ export default function CheckoutView() {
         <dt className="mt-2 text-base font-semibold">Total</dt>
         <dd className="mt-2 text-base font-semibold">{quote ? brl(totalC / 100) : "…"}</dd>
       </dl>
+      {brokenKits.map((b) => (
+        <p key={b.kitId} className="-mt-2 text-small text-muted">
+          {b.name}: {b.reason ?? "kit incompleto"}. As peças seguem com preço individual.
+        </p>
+      ))}
       {quoteState === "error" && <p className="field-error mt-0">Não deu para atualizar os valores. Confira a conexão.</p>}
     </div>
   );
@@ -522,7 +545,7 @@ export default function CheckoutView() {
                         "card",
                         "card",
                         "Cartão de crédito",
-                        `Até ${COMMERCE.installments}x${quote ? ` de ${brl(installmentCents(subtotalC - couponC + (ship?.priceCents ?? 0), COMMERCE.installments) / 100)}` : ""}${COMMERCE.installmentsInterestFree ? " sem juros" : ""} · no Mercado Pago`,
+                        `Até ${COMMERCE.installments}x${quote ? ` de ${brl(installmentCents(goodsC + (ship?.priceCents ?? 0), COMMERCE.installments) / 100)}` : ""}${COMMERCE.installmentsInterestFree ? " sem juros" : ""} · no Mercado Pago`,
                       ],
                     ] as const
                   ).map(([k, icon, t, d]) => (

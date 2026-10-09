@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
-import { brl, COMMERCE, FREE_SHIPPING_FROM } from "@/lib/catalog";
+import { COMMERCE } from "@/lib/catalog";
+import { BUILD_TIME } from "@/lib/clock";
+import { freeShippingCondition } from "@/lib/commerce/benefits";
+
+const SHIPPING = freeShippingCondition(BUILD_TIME);
 
 /**
  * Política de privacidade e termos de uso.
@@ -130,7 +134,7 @@ const terms: Block[] = [
     title: "Entrega",
     body: (
       <p>
-        Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento aprovado (ou da data da pré-venda). O prazo da transportadora aparece no checkout. Frete econômico grátis acima de {brl(FREE_SHIPPING_FROM)}.
+        Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento aprovado (ou da data da pré-venda). O prazo da transportadora aparece no checkout. {SHIPPING ? `${SHIPPING}.` : ""}
       </p>
     ),
   },

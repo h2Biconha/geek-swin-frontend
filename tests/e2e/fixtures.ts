@@ -27,7 +27,7 @@ export { expect };
 
 export async function addToBag(page: Page, slug: string, size: string) {
   await page.goto(`/product/${slug}`);
-  await page.getByRole("radiogroup").getByRole("radio", { name: new RegExp(`^${size}\\b`) }).check();
+  await page.getByRole("radiogroup", { name: /^Tamanho/ }).getByRole("radio", { name: new RegExp(`^${size}\\b`) }).check();
   await page.getByRole("button", { name: /Adicionar à bag|Garantir na pré-venda/ }).click();
 }
 

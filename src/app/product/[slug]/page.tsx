@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProductView from "@/components/views/ProductView";
 import JsonLd from "@/components/JsonLd";
-import { brl, categoryName, COMMERCE, getDrop, getProduct, PRODUCTS } from "@/lib/catalog";
+import { brl, categoryHref, categoryName, COMMERCE, getDrop, getProduct, PRODUCTS } from "@/lib/catalog";
 import { breadcrumbLd, productLd } from "@/lib/seo";
 
 export const generateStaticParams = () => PRODUCTS.map((p) => ({ slug: p.slug }));
@@ -30,7 +30,7 @@ export default async function Page({ params }: PageProps<"/product/[slug]">) {
     <>
       <ProductView product={p} />
       <JsonLd data={productLd(p, p.drop ? getDrop(p.drop) : undefined)} />
-      <JsonLd data={breadcrumbLd([["Início", "/"], ["Loja", "/shop"], [categoryName(p.category), `/shop?categoria=${p.category}`], [p.name, `/product/${p.slug}`]])} />
+      <JsonLd data={breadcrumbLd([["Início", "/"], ["Loja", "/shop"], [categoryName(p.category), categoryHref(p.category)], [p.name, `/product/${p.slug}`]])} />
     </>
   );
 }

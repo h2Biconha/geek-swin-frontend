@@ -238,13 +238,16 @@ function AdminOrderCard({ o, act }: { o: AdminOrder; act: (id: string, body: Rec
   );
 }
 
+type Demand = { alerts: { product_slug: string; size: string; pending: number }[]; sources: { source: string; people: number }[] };
+type StockData = { inventory: InvRow[]; editions: EdRow[]; demand?: Demand };
+
 function Stock() {
-  const [data, setData] = useState<{ inventory: InvRow[]; editions: EdRow[] } | null>(null);
+  const [data, setData] = useState<StockData | null>(null);
   const [msg, setMsg] = useState("");
   const [tick, setTick] = useState(0);
   useEffect(() => {
     let on = true;
-    api<{ inventory: InvRow[]; editions: EdRow[] }>("/api/admin/inventory").then((r) => on && r.ok && setData(r.data));
+    api<StockData>("/api/admin/inventory").then((r) => on && r.ok && setData(r.data));
     return () => {
       on = false;
     };
@@ -258,8 +261,9 @@ function Stock() {
   const save = async (row: InvRow, value: string) => {
     const stock = value.trim() === "" ? null : Number(value);
     if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return setMsg("Use um número inteiro ou deixe vazio (sob demanda).");
-    const r = await api<{ message?: string }>("/api/admin/inventory", { method: "PATCH", body: JSON.stringify({ slug: row.product_slug, size: row.size, stock }) });
-    setMsg(r.ok ? `Salvo: ${row.product_slug} ${row.size}.` : (r.data.message ?? "Não foi possível salvar."));
+    const r = await api<{ message?: string; notified?: number }>("/api/admin/inventory", { method: "PATCH", body: JSON.stringify({ slug: row.product_slug, size: row.size, stock }) });
+    const sent = r.data.notified ? ` ${r.data.notified} aviso${r.data.notified > 1 ? "s" : ""} de volta enviado${r.data.notified > 1 ? "s" : ""}.` : "";
+    setMsg(r.ok ? `Salvo: ${row.product_slug} ${row.size}.${sent}` : (r.data.message ?? "Não foi possível salvar."));
     setTick((t) => t + 1);
   };
   return (
@@ -297,6 +301,29 @@ function Stock() {
           </tbody>
         </table>
       </div>
+      {data.demand && (
+        <>
+          <h2 className="eyebrow mt-10">Demanda</h2>
+          <p className="mt-2 max-w-[60ch] text-small text-muted">Pedidos de “avise-me” ainda não atendidos. O aviso sai sozinho quando o estoque daquele tamanho volta, uma vez por pessoa.</p>
+          {data.demand.alerts.length ? (
+            <ul className="mt-3 grid gap-1 text-small">
+              {data.demand.alerts.map((a) => (
+                <li key={`${a.product_slug}-${a.size}`}>
+                  {getProduct(a.product_slug)?.name ?? a.product_slug}
+                  {a.size ? ` · ${a.size}` : ""}: <span className="num">{a.pending}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-small text-muted">Nenhum aviso pendente.</p>
+          )}
+          {data.demand.sources.length > 0 && (
+            <p className="mt-4 text-small text-muted">
+              Lista ativa por origem: {data.demand.sources.map((x) => `${x.source} ${x.people}`).join(" · ")}
+            </p>
+          )}
+        </>
+      )}
       <h2 className="eyebrow mt-10">Tiragens</h2>
       <ul className="mt-3 grid gap-1 text-small">
         {data.editions.map((e) => (
