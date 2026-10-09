@@ -3,14 +3,11 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { closeOverlay } from "@/lib/ui";
-import Reveal from "../ui/Reveal";
 import Toaster from "../ui/Toaster";
 import AnnouncementBar from "./AnnouncementBar";
 import CartDrawer from "./CartDrawer";
-import Cursor from "./Cursor";
-import DropAlert from "./DropAlert";
+import Consent from "./Consent";
 import Header from "./Header";
-import LoadingScreen from "./LoadingScreen";
 import MobileMenu from "./MobileMenu";
 import SearchOverlay from "./SearchOverlay";
 
@@ -23,7 +20,6 @@ export default function AppShell({ children, footer }: { children: React.ReactNo
 
   return (
     <>
-      <LoadingScreen />
       <a href="#conteudo" className="sr-only z-[300] focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:bg-accent focus:px-4 focus:py-3 focus:text-on-accent">
         Pular para o conteúdo
       </a>
@@ -37,9 +33,7 @@ export default function AppShell({ children, footer }: { children: React.ReactNo
       <SearchOverlay />
       <MobileMenu />
       <Toaster />
-      <Reveal />
-      {!checkout && <DropAlert />}
-      <Cursor />
+      <Consent />
     </>
   );
 }

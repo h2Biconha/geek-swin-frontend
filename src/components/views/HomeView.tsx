@@ -4,7 +4,6 @@ import HomeHero from "../drop/HomeHero";
 import NextDrop from "../drop/NextDrop";
 import WhyDrops from "../drop/WhyDrops";
 import ProductRail from "../product/ProductRail";
-import MembersTeaser from "../sections/MembersTeaser";
 import SeenInTheWild from "../sections/SeenInTheWild";
 import SectionHead from "../ui/SectionHead";
 
@@ -28,7 +27,6 @@ export default function HomeView() {
         </p>
       </section>
 
-      <NextDrop />
       <WhyDrops />
 
       <section aria-labelledby="core-t" className="wrap py-section">
@@ -38,7 +36,7 @@ export default function HomeView() {
         </div>
       </section>
 
-      <MembersTeaser />
+      <NextDrop />
       <SeenInTheWild />
     </>
   );

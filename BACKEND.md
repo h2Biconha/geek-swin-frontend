@@ -1,197 +1,146 @@
-# Back-end: o que o front espera
+# Back-end da GEEK SWIM
 
-Este documento é o contrato entre o front (pronto) e o back (a fazer). Os endpoints são **sugestões**: se preferir outro formato, mude aqui e no arquivo do front indicado em "Onde o front liga em cada coisa".
+O back-end mora **dentro do próprio Next** (rotas em `src/app/api/*`, regras em `src/server/*`). Não existe serviço separado. Este documento é o guia para quem vai continuar: como roda, o que já está pronto, o que falta configurar e o que **não foi testado contra serviços reais**.
 
-O front já está preparado: cada integração é **uma variável de ambiente**. Sem ela, a interface roda em prévia e diz isso ao cliente. Com ela, chama a URL.
+> Estado em 09/10/2026: pedidos, estoque, reserva, Pix e cartão via Mercado Pago, webhook, conta por link mágico, lista de avisos, painel e e-mails estão implementados e cobertos por testes locais (PGlite + Mercado Pago simulado). **Nada foi testado com credenciais reais do Mercado Pago, Resend, Neon ou Melhor Envio.**
 
-## Antes de codar: construir ou plugar?
+## 1. Modos da loja
 
-1. **Plataforma como motor (headless)**: Shopify (Storefront API) ou Nuvemshop. Checkout, Pix, parcelamento, antifraude, nota fiscal e estoque vêm prontos; o back só faz a ponte. Menos código e menos risco, com mensalidade mais taxa por venda.
-2. **Back próprio**: Postgres + gateway (Mercado Pago ou Stripe) + frete (Melhor Envio). Mais controle e mais trabalho; segurança, antifraude e LGPD ficam por sua conta.
+`NEXT_PUBLIC_STORE_MODE` decide tudo. É lido **no build** (o Next embute variáveis `NEXT_PUBLIC_`), então trocar o modo exige novo build.
 
-Os contratos abaixo servem para os dois: no caso 1, as rotas `/api/*` do Next viram adaptadores da plataforma.
+| Modo | Banco | Pagamento | Uso |
+|---|---|---|---|
+| `preview` (padrão) | nenhum | nenhum | vitrine. Toda rota `/api/*` da loja responde 503 e a interface diz "prévia". É o modo do arquivo único |
+| `test` | PGlite local (ou `DATABASE_URL`) | `mock` (botões "simular") ou Mercado Pago com credenciais de teste | desenvolvimento, e2e, homologação |
+| `live` | Postgres obrigatório | Mercado Pago obrigatório | venda real. `src/server/env.ts > configProblems()` recusa operar se faltar banco, `APP_SECRET`, Mercado Pago, Resend ou https |
 
-## Regras que valem para qualquer caminho
+`GET /api/health` mostra o modo e o que falta configurar (sem expor valores).
 
-- **Preço e estoque vêm sempre do servidor.** O front manda `slug`, `size` e `qty`; o servidor recalcula tudo.
-- Valores em **centavos inteiros** no back. O front usa reais e calcula Pix e parcela em centavos (`src/lib/catalog.ts`).
-- Regras comerciais em `catalog.json > commerce`: frete grátis a partir de R$ 349 (`freeShippingFrom`), 6x sem juros (`installments`), 5% no Pix (`pixDiscount`). Pix = `total - round(total × 0,05)`, em centavos.
-- Peças de drop são numeradas (`edition`) e **sem reposição**. Peças Core (`drop: null`) podem repor.
-- Nunca inventar estoque, avaliação ou foto de cliente. Se o dado não existe, o front mostra o estado vazio.
+## 2. Rodar local com back-end
 
-## Pré-venda (decidido em 03/10/2026)
-
-Antes de `drop.opensAtUTC` (`2026-10-10T23:00:00Z`, 20h de Brasília), quem compra peça de um drop com `presale: true` está na pré-venda. O front mostra isso no card, na página, na bag e no checkout, e para sozinho quando o drop abre. Envio a partir de `drop.shipsFrom` (`2026-10-14`, **data provisória, confirme com o Henrique**).
-
-O back precisa garantir:
-
-1. **Estoque:** a pré-venda consome a mesma tiragem. O número da peça (ex.: 037/150) é atribuído no pagamento confirmado, em ordem.
-2. **Reserva:** curta durante o pagamento, baixa definitiva no webhook de pago. Nunca vender acima de `edition`.
-3. **Pagamento:** cobrado na hora. Guarde `presale: true` e `ships_from` no pedido.
-4. **Envio:** pedido com item de pré-venda sai inteiro a partir de `shipsFrom` (é o que a bag promete, em `src/components/layout/CartDrawer.tsx`).
-5. **E-mails:** confirmação dizendo que é pré-venda e a data de envio; aviso quando postar.
-6. **Cancelamento:** reembolso integral antes do envio (prometido em `/help#pre-venda`). Depois de receber, 7 dias de arrependimento (CDC).
-7. **Atraso:** se passar de `shipsFrom`, avisar e oferecer cancelamento com estorno.
-
-## Modelo de dados (mínimo)
-
-```
-Product      slug (PK), number, name, category, price_cents, compare_at_cents?, color, specs, drop?, edition?,
-             size_table, description, fabric[], fit, media[], added_at, rank, featured
-Stock        product_slug, size, qty                     -- esgotado = qty 0
-Drop         number (PK), slug, name?, tagline, opens_at, closes_at?, presale, ships_from?, ...textos
-Order        id, status (pending|paid|canceled|shipped|refunded), presale, ships_from?, customer (email, name, cpf, phone),
-             address, items[], subtotal_cents, shipping_cents, discount_cents, total_cents, payment_method,
-             installments?, coupon?, provider, provider_ref, created_at
-Reservation  product_slug, size, qty, order_id, expires_at
-Subscriber   email (unique), whatsapp?, source, product?, size?, consent_at, ip, unsubscribed_at?
-Customer     email (unique), name, level (0..3), created_at          -- para conta e GEEK LEVEL
-Wishlist     customer_email, product_slug, created_at                -- opcional; hoje vive no navegador
-Review       id, product_slug, order_id, rating, text, size_bought, fit, photo?, approved_at   -- só de compra verificada
+```bash
+cp .env.example .env.local
+# no .env.local: NEXT_PUBLIC_STORE_MODE=test  e  ADMIN_PASSWORD=uma-senha-longa
+npm run dev
 ```
 
-Os tipos que o front lê estão em `src/lib/catalog.ts` (`Product`, `Drop`, `Review`, `Media`).
+Sem `DATABASE_URL`, o banco é um Postgres em WebAssembly (PGlite) gravado em `.data/pglite`. As migrações rodam sozinhas no primeiro acesso. Para zerar: apague `.data/`.
 
-## catalog.json (v2): formato que a API deve devolver
+Fluxo de teste: adicione uma peça, finalize com Pix e, na página do pedido, use **Simular pagamento aprovado**. Isso passa pelo mesmo `applyPaymentUpdate` do webhook real. Login: em modo teste com e-mail `console`, a tela de conta mostra o link mágico (em produção ele só vai por e-mail).
 
-```jsonc
-{
-  "site": { "preview": true, "previewNote": "..." },          // preview=false tira os avisos de estoque ilustrativo
-  "commerce": { "freeShippingFrom": 349, "installments": 6, "pixDiscount": 0.05 },
-  "categories": [{ "slug": "moletons", "name": "Moletons" }],
-  "sizeTables": { "top": { "label": "...", "columns": [...], "rows": [[...]] } },
-  "drops": [{
-    "number": "001", "slug": "001-insert-coin", "name": "INSERT COIN", "tagline": "...", "quote": "...",
-    "concept": "...", "manifesto": [], "story": [], "opensAtUTC": "2026-10-10T23:00:00Z", "closesAtUTC": null,
-    "presale": true, "shipsFrom": "2026-10-14", "heroArt": "/art/hoodie-line.svg", "heroMedia": null,
-    "gallery": [], "video": null, "looks": [{ "name": "Ranked", "items": ["slug", "slug"] }]
-  }],
-  "products": [{
-    "slug": "obsidian-shell-hoodie", "number": "001", "name": "Obsidian Shell Hoodie", "category": "moletons",
-    "price": 389.9, "compareAt": null, "color": "Preto", "specs": "...", "drop": "001", "edition": 150,
-    "stockLeft": 37, "sizes": ["P","M","G","GG","XG"], "soldOut": ["P"], "sizeTable": "top",
-    "addedAt": "2026-10-03", "rank": 1, "featured": true,
-    "media": [{ "src": "/art/hoodie-front.svg", "view": "Frente" }],   // foto real: { "src": "/fotos/x.jpg", "alt": "...", "view": "Modelo" }
-    "description": "...", "fabric": ["..."], "fit": "..."
-  }],
-  "reviews": [],                                   // { id, product, name, rating, text, size?, date, verified: true }
-  "community": { "instagram": "geekswim", "posts": [] }   // { src, alt, view } só com autorização escrita de quem aparece
-}
+Painel: `/admin` com `ADMIN_PASSWORD`.
+
+## 3. Mapa do código
+
+```
+src/server/env.ts            variáveis, modos e checagem de configuração
+src/server/db/               conexão (pg ou PGlite), migrações (só ADICIONE no fim), singleton
+src/server/inventory.ts      estoque: reserva atômica, baixa, liberação, sincronização com o catálogo
+src/server/orders.ts         cotação, criação de pedido, confirmação de pagamento, visão pública
+src/server/payments/         mercadopago.ts (REST, sem SDK), mock.ts (só modo teste), index.ts
+src/server/shipping.ts       frete: tabela do catálogo ou Melhor Envio
+src/server/email.ts          console ou Resend; modelos de e-mail
+src/server/auth.ts           link mágico, sessão (cookie httpOnly), admin
+src/server/security.ts       hash/HMAC, mesma origem (CSRF), rate limit, leitura de JSON com limite
+src/server/http.ts           storeRoute(): 503 em prévia, 403 fora da origem, 500 sem vazar detalhe
+src/server/validation.ts     zod: checkout, cotação, itens
+src/lib/commerce/pricing.ts  cálculo de preço PURO, usado no navegador (prévia) e no servidor (autoridade)
+src/lib/catalog.json         catálogo e regras comerciais (commerce.*)
 ```
 
-Fase do drop (calculada no front em `dropPhase`, a partir das datas): `coming-soon` (sem data), `presale`, `upcoming`, `live`, `sold-out`, `closed`.
-Status da peça (`availability`): `available`, `low` (poucas unidades, limites `LOW_ABS`/`LOW_PCT` em `catalog.ts`), `sold-out`, `coming-soon`.
+Novo drop ou peça: edite `src/lib/catalog.json` (formato em `src/lib/catalog.ts`). Páginas, sitemap, busca, filtros, estoque (`syncCatalog`) e JSON-LD se ajustam sozinhos. A fase do drop (em breve, pré-venda, próximo, ao vivo, esgotado, arquivo) é calculada pelas datas e pelo estoque real (`dropPhase`), com `status` opcional para forçar.
 
-## Endpoints
+## 4. Rotas
 
-### Catálogo
-
-`GET /api/products` devolve `products` no formato acima, com `stockLeft` e `soldOut` já calculados. `GET /api/products/:slug` devolve um produto ou `404`. `GET /api/drops` devolve `drops`.
-
-As páginas de produto e de drop são geradas no build (`generateStaticParams` + `dynamicParams = false`). Com a API, use `revalidate` (ISR) para texto e preço e busque **estoque no cliente**.
-
-### Estoque em tempo real
-
-`GET /api/stock?slugs=obsidian-shell-hoodie,respawn-cap`
-
-```json
-{ "obsidian-shell-hoodie": { "P": 0, "M": 4, "G": 12, "GG": 9, "XG": 12 }, "respawn-cap": { "Único": 64 } }
-```
-
-O front usa isso para riscar tamanhos, atualizar "Restam X" e marcar itens indisponíveis na bag (`isUnavailable` em `src/lib/cart.ts`).
-
-### Lista (e-mail e WhatsApp)
-
-`POST {NEXT_PUBLIC_SUBSCRIBE_URL}` (sugestão: `/api/subscribe`, já existe respondendo 501)
-
-```json
-{ "email": "nome@gmail.com", "whatsapp": "11987654321", "consent": true, "source": "aviso-drop-002",
-  "product": "obsidian-shell-hoodie", "size": "P" }
-```
-
-`whatsapp`, `product` e `size` são opcionais. `source` diz de onde veio: `lobby` (rodapé), `aviso-drop-<n>` (próximo drop), `drop-abertura` (aviso não bloqueante), `members`, `avise-me` (tamanho/peça esgotada, com `product` e `size`).
-Respostas: `201` cadastrado, `200` já estava (não é erro), `400 { "error": "email_invalido" }`, `429`. Guarde `consent_at`, ofereça descadastro em todo envio (LGPD) e só mande WhatsApp para quem informou o número com consentimento.
-
-### Frete
-
-`POST {NEXT_PUBLIC_SHIPPING_URL}` (sugestão: `/api/shipping/quote`)
-
-```json
-{ "cep": "01310100" }
-```
-
-```json
-{ "options": [ { "id": "pac", "name": "Econômico", "days": "6 a 9 dias úteis", "price": 0 },
-               { "id": "sedex", "name": "Expresso", "days": "2 a 4 dias úteis", "price": 39.9 } ] }
-```
-
-A regra de grátis acima de R$ 349 é aplicada no servidor. O endereço é preenchido pelo ViaCEP no navegador (público, sem chave).
-
-### Checkout
-
-`POST {NEXT_PUBLIC_CHECKOUT_URL}` (sugestão: `/api/checkout`, já existe respondendo 501). Tipos em `src/lib/commerce/types.ts`.
-
-```json
-{ "items": [{ "slug": "obsidian-shell-hoodie", "size": "G", "qty": 1 }],
-  "customer": { "email": "nome@gmail.com", "name": "Nome Sobrenome", "cpf": "52998224725", "phone": "11987654321" },
-  "address": { "cep": "01310100", "street": "Avenida Paulista", "number": "1000", "complement": "", "district": "Bela Vista", "city": "São Paulo", "state": "SP" },
-  "shippingId": "pac", "payment": { "method": "pix", "installments": 1 }, "coupon": "OPCIONAL" }
-```
-
-O servidor valida itens e estoque, recalcula preço, frete, desconto Pix e cupom, cria o pedido `pending`, reserva as peças (sugestão: 10 min) e cria o pagamento pelo adaptador de `PAYMENT_PROVIDER`.
-
-Resposta de sucesso (uma das duas formas):
-
-```json
-{ "orderId": "GS-000128", "redirectUrl": "https://www.mercadopago.com.br/checkout/..." }
-{ "orderId": "GS-000128", "pix": { "qrCode": "data:image/png;base64,...", "copyPaste": "000201...", "expiresAt": "2026-10-10T23:30:00Z" } }
-```
-
-Erros: `409` sem estoque (o front pede para revisar a bag), `400 { "error": "dados_invalidos", "message": "..." }`, `402 { "error": "pagamento_recusado", "message": "..." }`.
-
-### Pagamento (adaptadores)
-
-`src/lib/commerce/providers/index.ts` (marcado `server-only`) define a interface `PaymentProvider` com `createPayment` e `verifyWebhook`. Implemente:
-
-- **Mercado Pago** (`PAYMENT_PROVIDER=mercadopago`, `MERCADOPAGO_ACCESS_TOKEN`): Pix com QR e copia e cola, cartão em até 6x sem juros, boleto. SDK `mercadopago`.
-- **Stripe** (`PAYMENT_PROVIDER=stripe`, `STRIPE_SECRET_KEY`): cartão, Pix e boleto no Brasil. SDK `stripe`.
-
-`POST /api/webhooks/payment`: chamado pelo gateway, nunca pelo front. Valide a assinatura (`PAYMENT_WEBHOOK_SECRET`). Pago: pedido `paid`, reserva vira baixa, número da peça atribuído, e-mail enviado. Expirado ou recusado: libera a reserva.
-
-`GET /api/orders/:id`: status para a tela de confirmação e para a conta.
-
-### Cupom
-
-`POST /api/coupon { "code": "X", "subtotal": 389.9 }` → `{ "ok": true, "discount": 38.99, "message": "10% aplicado" }` ou `{ "ok": false, "message": "Cupom inválido ou expirado." }`. O valor final é sempre recalculado no checkout. Front: `validateCoupon` em `src/lib/commerce/checkout.ts`.
-
-### Conta, GEEK LEVEL e members
-
-Login sem senha (link mágico por e-mail) é o recomendado. Endpoints sugeridos: `POST /api/auth/link`, `GET /api/me` (nome, e-mail, nível, drops que tem, pedidos, endereços), `PUT /api/me/sizes` (tamanhos favoritos, hoje em `localStorage`).
-Níveis em `src/lib/levels.ts`: PLAYER (criou conta), MEMBER (primeira compra entregue), OG (peças de 3 drops), LEGEND (6 drops ou convite). Calcule no servidor a partir dos pedidos entregues. O acesso antecipado de MEMBER (1 h antes do drop) precisa ser checado **no checkout**, não só escondido na interface.
-
-### Wishlist
-
-Hoje fica no navegador (`gs-wishlist`). Com conta: `GET/PUT /api/me/wishlist` e mesclar a lista local no primeiro login. O "avisar-me" de peça esgotada usa a lista (`source: "avise-me"`).
-
-### Analytics
-
-`src/lib/analytics.ts` envia para `dataLayer` (GTM) e `fbq` (Meta Pixel) só se `NEXT_PUBLIC_GTM_ID` / `NEXT_PUBLIC_META_PIXEL_ID` existirem. Eventos: `view_item`, `add_to_cart`, `add_to_wishlist`, `search`, `begin_checkout`, `sign_up`. Falta `purchase`, que deve sair da página de confirmação com o pedido pago (ou via Conversions API no webhook). Exige banner de cookies antes de ligar (LGPD).
-
-## Onde o front liga em cada coisa
-
-| Arquivo | Hoje | Para ligar |
+| Rota | Método | O que faz |
 |---|---|---|
-| `src/lib/subscribe.ts` | responde `not_connected` | `NEXT_PUBLIC_SUBSCRIBE_URL` |
-| `src/lib/commerce/checkout.ts` | demonstração (não cobra) | `NEXT_PUBLIC_CHECKOUT_URL`, `NEXT_PUBLIC_SHIPPING_URL` |
-| `src/lib/commerce/providers/` | lança "não implementado" | adaptador Mercado Pago ou Stripe |
-| `src/lib/catalog.json` + `catalog.ts` | JSON importado | buscar a API no servidor com `revalidate` |
-| `src/components/product/BuyBox.tsx` | `soldOut`/`stockLeft` do JSON | `/api/stock` ao abrir a página |
-| `src/components/views/AccountView.tsx` | conta de exemplo | `/api/auth/link` e `/api/me` |
-| `src/lib/brand.ts` | `whatsapp`, `cnpj` nulos | dados reais (o site passa a exibir) |
-| `src/lib/cart.ts` | bag no `localStorage` (`gs-cart`) | pode continuar; o servidor valida no checkout |
+| `/api/health` | GET | modo e pendências de configuração |
+| `/api/stock?slugs=a,b` | GET | disponível por tamanho e por tiragem (null = sob demanda/sem limite) |
+| `/api/checkout/quote` | POST | itens + CEP + método → linhas, frete, cupom, Pix, problemas de estoque. Não reserva |
+| `/api/checkout` | POST | cria pedido. Header `Idempotency-Key` (16 a 80 caracteres). 201 / 400 campos / 409 sem estoque ou fora de venda / 502 gateway |
+| `/api/orders/:id?t=token` | GET | visão do pedido. Token do link OU sessão com o mesmo e-mail; senão 404. Se pendente, consulta o gateway (no máximo a cada 15 s) |
+| `/api/webhooks/mercadopago` | POST | valida `x-signature`, deduplica, **consulta a API** e aplica o estado |
+| `/api/dev/mock-payment` | POST | só `test` + `mock`: simula aprovado/recusado |
+| `/api/subscribe` | POST | lista (201 novo, 200 já estava). Honeypot `website`, rate limit, grava data e texto do consentimento |
+| `/api/unsubscribe` | POST | sai da lista com token assinado (página `/unsubscribe`) |
+| `/api/auth/link` | POST | envia link mágico (15 min, uso único) |
+| `/api/auth/callback?token=` | GET | troca o link por sessão (cookie `gs_session`, 30 dias) |
+| `/api/auth/logout` · `/api/me` | POST · GET | sair · cliente e pedidos (inclusive os feitos antes de criar conta, pelo e-mail) |
+| `/api/admin/session` | POST/DELETE | entrar/sair do painel (cookie `gs_admin`, 12 h) |
+| `/api/admin/orders` · `/api/admin/orders/:id` | GET · PATCH | lista; `ship` (com rastreio), `deliver`, `cancel` (pendente), `note` |
+| `/api/admin/inventory` | GET/PATCH | estoque bruto; define estoque físico por tamanho (não aceita abaixo de vendido + reservado) |
 
-## Segurança e variáveis
+Toda rota que muda estado exige `Origin` igual ao site (CSRF). Erro inesperado responde 500 genérico; o detalhe fica só no log, sem dados do comprador.
 
-- Segredos só em variáveis do servidor (lista em `.env.example`). Nada secreto com prefixo `NEXT_PUBLIC_`.
-- Webhook com assinatura; rotas públicas com rate limit; captcha invisível se aparecer spam.
-- Antes de vender: política de privacidade, termos, política de trocas, CNPJ e contato reais no rodapé e em `/help`.
+## 5. Regras de dinheiro e estoque
+
+- **Preço vem do catálogo, nunca do navegador.** O cliente manda `slug`, `size`, `qty`; o servidor recalcula com `computeTotals()`. Teste: `tests/integration/orders.test.ts > preço enviado pelo navegador é ignorado`.
+- Centavos inteiros. Ordem: subtotal → cupom → desconto Pix (só sobre itens, não sobre frete) → frete.
+- Duas travas, ambas por `UPDATE ... WHERE disponível >= qtd` (atômico, sem corrida):
+  - `inventory` por tamanho: `stock` null = **produção sob demanda** (sem limite físico, caso de Savvy Print/Dimona). Número = unidades físicas.
+  - `editions` por peça de drop: teto da tiragem numerada (`edition` no catálogo).
+- Reserva de `commerce.reservationMinutes` (30) ao criar o pedido. Vencida, o pedido vira `expired` e a peça volta (liberação preguiçosa a cada leitura; ver "O que ainda não existe").
+- Pagamento confirmado → reserva vira venda e **cada peça recebe seu número** (`order_items.edition_from/to`), na ordem de confirmação.
+- Pago depois de expirar: tenta vender do disponível; se não houver peça, o pedido vai para `needs_review` e o admin recebe e-mail para estornar.
+- Valor pago diferente do total → `needs_review`.
+- Confirmação repetida não faz nada (idempotente). O e-mail de pago sai uma vez.
+
+Status do pedido: `pending → paid → shipped → delivered`, ou `pending → expired | canceled`, `paid → refunded`, e `needs_review` (manual).
+
+## 6. Mercado Pago (o que configurar)
+
+Implementado em `src/server/payments/mercadopago.ts`, via REST:
+
+- **Pix**: API de Orders (`POST /v1/orders`, `processing_mode: automatic`, `X-Idempotency-Key`). O QR e o copia e cola aparecem na página do pedido, com contagem até expirar.
+- **Cartão**: Checkout Pro (`POST /checkout/preferences`), só cartão, até `commerce.installments` parcelas, expira junto com a reserva. A pessoa digita o cartão no ambiente do Mercado Pago. **O site nunca recebe dado de cartão.**
+- **Confirmação**: só pelo webhook assinado + consulta à API (`GET /v1/orders/:id` ou `/v1/payments/:id`), ou pela consulta ativa da página do pedido. O retorno do navegador (`back_urls`) nunca marca pago.
+
+Passo a passo:
+
+1. mercadopago.com.br/developers → Suas integrações → criar aplicação (Checkout Pro + Checkout API via Orders).
+2. Copie o **Access Token de teste** para `MERCADOPAGO_ACCESS_TOKEN`, `PAYMENT_PROVIDER=mercadopago`, `NEXT_PUBLIC_STORE_MODE=test`.
+3. Webhooks → URL `https://SEU-DOMINIO/api/webhooks/mercadopago`, eventos **Order** e **Pagamentos**. Copie a assinatura secreta para `MERCADOPAGO_WEBHOOK_SECRET`.
+4. Teste com os usuários e cartões de teste da documentação do Mercado Pago. Para receber webhook localmente, use um túnel (ex.: `cloudflared tunnel --url http://localhost:3000`) e ponha a URL pública em `NEXT_PUBLIC_SITE_URL`.
+5. Só depois: credenciais de produção e `NEXT_PUBLIC_STORE_MODE=live`.
+
+**Não verificado contra a API real** (a rede do ambiente onde isto foi escrito bloqueia o Mercado Pago): formato exato das respostas de Orders em produção, `statement_descriptor`, comportamento de `expiration_date_to` no Checkout Pro. Os testes usam respostas simuladas com os campos da documentação (`tests/integration/webhook.test.ts`). Faça um pagamento de teste ponta a ponta antes de abrir.
+
+## 7. Outros serviços
+
+| Serviço | Variáveis | Estado |
+|---|---|---|
+| Postgres (Neon recomendado: tem plano grátis e é serverless) | `DATABASE_URL`; em produção `DB_AUTO_MIGRATE=false` + `npm run db:migrate` no deploy | migrações testadas em PGlite; **não testado em Neon** |
+| E-mail transacional (Resend) | `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (domínio verificado com SPF/DKIM) | implementado, **não testado com conta real** |
+| Frete (Melhor Envio) | `SHIPPING_PROVIDER=melhorenvio`, `MELHORENVIO_TOKEN`, `SHIP_FROM_CEP` | adaptador escrito pela documentação pública, **não testado**. Pesos e medidas por categoria (`shipping.ts > PACK`) são estimativas. Sem ele vale a tabela `commerce.shippingTable` |
+| Hospedagem | Vercel (ou qualquer Node 22.12+) | `next build && next start`. Defina as variáveis do `.env.example` |
+| Medição | `NEXT_PUBLIC_GTM_ID`, `NEXT_PUBLIC_META_PIXEL_ID` | carregam só depois do aceite no aviso de cookies. `purchase` sai uma vez por pedido, na página do pedido pago |
+
+## 8. Pendências que não são código
+
+- Confirmar com a produção (Savvy Print/Dimona ou outra): composição, gramatura, medidas, prazo. Depois, `site.specsConfirmed: true` no catálogo (tira os avisos "em validação").
+- Confirmar regras comerciais em `catalog.json > commerce`: troca em 30 dias, frete grátis acima de R$ 349, 6x sem juros, 5% no Pix, tabela de frete, prazo de postagem (`handlingDays`) e envio do Drop 001 a partir de 14/10.
+- Tiragens (`edition`) do Drop 001: hoje 150 / 300 / 200 / 200. Confirme antes de abrir; depois de vender, só aumente.
+- Dados da empresa em `src/lib/brand.ts`: CNPJ, razão social, WhatsApp, e-mail. Encarregado de dados (LGPD) na política de privacidade.
+- Revisão jurídica de `/privacy` e `/terms` (marcados como versão preliminar).
+- Nota fiscal: não implementada. Emita pelo emissor da empresa a partir do painel (ou integre Bling/Tiny depois).
+
+## 9. O que ainda não existe
+
+- **Cron**: a liberação de reservas vencidas é preguiçosa (acontece a cada leitura de estoque ou pedido). Para e-mail de "Pix expirou" ou relatórios, crie um cron (Vercel Cron) chamando uma rota protegida.
+- Avaliações de compra verificada (tabela e convite pós-entrega). Hoje a seção some quando não há avaliação.
+- Envio de campanhas para a lista: exporte `subscribers` com `unsubscribed_at is null` para a ferramenta de e-mail marketing e inclua o link de descadastro (`unsubscribeLink()`).
+- Estorno pelo painel (hoje: estorne no Mercado Pago; o webhook muda o pedido para `refunded`).
+- Cupons pelo painel (hoje: SQL, exemplo em `src/server/coupons.ts`).
+- Favoritos e tamanhos salvos no servidor (hoje ficam no navegador).
+
+## 10. Testes
+
+```bash
+npm test          # unidade + integração (PGlite em memória, Mercado Pago simulado): preço, fases do drop,
+                  # validações, assinatura do webhook, reserva, idempotência, tiragem, expiração, rotas
+npm run e2e       # navegador (Playwright) contra build de produção em modo teste: compra com Pix de teste,
+                  # peça esgotada, busca vazia, formulário inválido, teclado, axe (WCAG 2.2 AA), SEO, 375 a 1920 px
+npm run check     # lint + tipos + testes + build
+```
+
+O e2e sobe o próprio servidor na porta 3100 com um banco novo em `.data/e2e`. Numa máquina sem o Chromium do Playwright, rode `npx playwright install chromium` antes.

@@ -5,7 +5,7 @@ import { breadcrumbLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Drops · arquivo da marca",
-  description: "Todos os drops: número, nome, tiragem e status. Peças esgotadas ficam no archive.",
+  description: "Todos os drops: número, nome, tiragem e status. Peças esgotadas ficam no arquivo.",
   alternates: { canonical: "/drops" },
 };
 

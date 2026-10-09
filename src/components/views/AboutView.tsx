@@ -3,9 +3,9 @@ import { BRAND } from "@/lib/brand";
 
 const PRINCIPLES = [
   ["Não é fantasia", "Nada de personagem licenciado, nada de logo de jogo. A referência está no detalhe, não no peito inteiro."],
-  ["Peso de verdade", "Moletom de 520 g, malha de 280 g, sarja que segura o caimento. Roupa que dura mais que o hype."],
+  ["Ficha técnica aberta", "Composição, gramatura e medidas de cada peça na própria página. Dado no lugar de adjetivo."],
   ["Pouco e numerado", "Cada drop tem tiragem fechada. Acabou, vai para o arquivo. Sem reposição, sem promoção de queima."],
-  ["Comunidade antes de campanha", "Quem está no lobby sabe primeiro, entra antes e ajuda a decidir o próximo capítulo."],
+  ["Comunidade antes de campanha", "Quem está na lista recebe o aviso de cada drop por e-mail, com data, hora e link."],
 ];
 
 export default function AboutView() {
@@ -13,8 +13,8 @@ export default function AboutView() {
     <>
       <section className="theme-dark grain relative -mt-header overflow-hidden pt-header">
         <div className="wrap relative pt-16 pb-section lg:pt-24">
-          <p className="eyebrow text-muted">About {BRAND.name}</p>
-          <h1 className="font-display mt-6 max-w-[12ch] animate-[rise_.9s_var(--ease-out)_both] text-d1">Player by choice.</h1>
+          <p className="eyebrow text-muted">Sobre a {BRAND.name}</p>
+          <h1 className="font-display mt-6 max-w-[12ch] animate-[rise_.9s_var(--ease-out)_both] text-d1">Jogador por escolha.</h1>
           <p className="mt-10 max-w-[38ch] animate-[rise_.9s_var(--ease-out)_.15s_both] text-[1.25rem] text-muted">A gente cresceu entre tela de título, servidor caindo às três da manhã e fórum que ninguém mais lembra. Isso virou repertório. Agora vira roupa.</p>
         </div>
       </section>
@@ -31,9 +31,9 @@ export default function AboutView() {
             Só que identidade não é fantasia. Ninguém quer sair de casa vestido de merch. A gente quer a peça que funciona no campeonato, no rolê e no jantar, e que só quem viveu entende de onde veio.
           </p>
           <p data-reveal className="text-muted">
-            Por isso o corte vem do streetwear, o tecido vem do pesado e a referência vem escondida: uma moldura de seleção, um número de série, uma frase que pisca antes do jogo começar.
+            Por isso o corte vem do streetwear e a referência vem escondida: uma moldura de seleção, um número de série, uma frase que pisca antes do jogo começar.
           </p>
-          <p data-reveal className="font-display text-d3">Não é merch. É uniforme.</p>
+          <p data-reveal className="font-display text-d3">Não é merch. É cultura.</p>
         </div>
       </section>
 
@@ -67,9 +67,9 @@ export default function AboutView() {
             <Link href="/drops/001-insert-coin" className="btn btn-primary btn-lg">
               Ver Drop 001
             </Link>
-            <Link href="/members" className="btn btn-secondary btn-lg">
-              Members
-            </Link>
+            <a href="#lista" className="btn btn-secondary btn-lg">
+              Entrar na lista
+            </a>
           </div>
         </div>
       </section>

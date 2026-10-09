@@ -1,53 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { brl, dateLabel, FREE_SHIPPING_FROM, getDrop, INSTALLMENTS, shipsLabel, SITE, timeLabel } from "@/lib/catalog";
+import { useState } from "react";
+import { brl, dateLabel, FREE_SHIPPING_FROM, getDrop, shipsLabel, SITE, timeLabel } from "@/lib/catalog";
 import { useDropPhase } from "@/lib/time";
 
 const drop = getDrop("001")!;
 
-/** Barra fina no topo. Mensagens giram a cada 5 s; pausa com o mouse em cima. */
+/**
+ * Barra fina no topo com UMA mensagem, a mais útil para a fase do drop.
+ * Fixa de propósito: texto que gira sozinho atrapalha leitura (WCAG 2.2.2) e ninguém lê o terceiro slide.
+ */
 export default function AnnouncementBar() {
   const phase = useDropPhase(drop);
-  const [i, setI] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [note, setNote] = useState(false);
-  const msgs: { text: string; href?: string }[] = [
-    phase === "presale" && drop.opensAtUTC && drop.shipsFrom
-      ? { text: `Pré-venda Drop 001 aberta · abre ${dateLabel(drop.opensAtUTC)} às ${timeLabel(drop.opensAtUTC)} · envio a partir de ${shipsLabel(drop.shipsFrom)}`, href: `/drops/${drop.slug}` }
-      : phase === "live"
-        ? { text: "Drop 001 · INSERT COIN está ao vivo", href: `/drops/${drop.slug}` }
-        : { text: "Drop 002 em produção · entre no lobby para saber primeiro", href: "/drops/002" },
-    { text: `Frete grátis acima de ${brl(FREE_SHIPPING_FROM)} · ${INSTALLMENTS}x sem juros` },
-    { text: "Primeira troca por nossa conta" },
-  ];
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => setI((x) => (x + 1) % 3), 5000);
-    return () => clearInterval(id);
-  }, [paused]);
-  const m = msgs[i];
+  const opens = drop.opensAtUTC;
+  const msg: { text: string; href?: string } =
+    phase === "presale" && opens
+      ? { text: `Pré-venda do Drop ${drop.number} · abre ${dateLabel(opens)} às ${timeLabel(opens)}${drop.shipsFrom ? ` · envio a partir de ${shipsLabel(drop.shipsFrom)}` : ""}`, href: `/drops/${drop.slug}` }
+      : phase === "upcoming" && opens
+        ? { text: `Drop ${drop.number} abre ${dateLabel(opens)} às ${timeLabel(opens)} · entre na lista`, href: "/#lista" }
+        : phase === "live"
+          ? { text: `Drop ${drop.number} · ${drop.name ?? ""} está aberto`, href: `/drops/${drop.slug}` }
+          : { text: `Frete grátis acima de ${brl(FREE_SHIPPING_FROM)}` };
   return (
-    <div className="theme-dark relative z-[51] border-b border-line" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <div className="theme-dark relative z-[51] border-b border-line">
       <div className="wrap flex h-9 items-center justify-center gap-3">
         {SITE.preview && (
-          <button type="button" onClick={() => setNote((n) => !n)} aria-expanded={note} className="eyebrow shrink-0 border border-line-strong px-1.5 py-0.5 text-accent-fg" title={SITE.previewNote}>
+          <button type="button" onClick={() => setNote((n) => !n)} aria-expanded={note} aria-controls="preview-note" className="eyebrow shrink-0 border border-line-strong px-1.5 py-0.5 text-accent-fg">
             Prévia
           </button>
         )}
-        <p key={i} className="eyebrow min-w-0 animate-[rise_.4s_var(--ease-out)] truncate text-fg" aria-live="off">
-          {m.href ? (
-            <Link href={m.href} className="link-u">
-              {m.text}
+        <p className="eyebrow min-w-0 truncate text-fg">
+          {msg.href ? (
+            <Link href={msg.href} className="link-u">
+              {msg.text}
             </Link>
           ) : (
-            m.text
+            msg.text
           )}
         </p>
       </div>
       {note && (
-        <p role="status" className="wrap border-t border-line py-3 text-center text-small text-muted">
+        <p id="preview-note" className="wrap border-t border-line py-3 text-center text-small text-muted">
           {SITE.previewNote}
         </p>
       )}

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { availability, CATEGORIES, categoryName, dropPhase, DROPS, getDrop, PRODUCTS, type Product } from "@/lib/catalog";
+import { availability, CATEGORIES, categoryName, dropPhase, DROPS, getDrop, PRODUCTS, sizeOut, type Product } from "@/lib/catalog";
+import { itemPayload, track } from "@/lib/analytics";
+import { useInventoryMap } from "@/lib/inventory";
+import { matchesQuery } from "@/lib/search";
 import { useNow } from "@/lib/time";
 import { closeOverlay, openOverlay, overlay } from "@/lib/ui";
 import { readQuery, writeQuery } from "@/lib/url";
@@ -14,7 +17,6 @@ import Icon from "../ui/Icon";
 const SORTS = [
   ["destaques", "Destaques"],
   ["recentes", "Mais recentes"],
-  ["vendidos", "Mais vendidos"],
   ["menor", "Menor preço"],
   ["maior", "Maior preço"],
 ] as const;
@@ -28,13 +30,15 @@ const SIZE_GROUPS: [string, string[]][] = [
   ["Calças", ["38", "40", "42", "44", "46"]],
   ["Outros", ["Único", "38-40", "41-43", "44-46"]],
 ];
-type F = { categoria: string[]; tamanho: string[]; preco: string[]; drop: string; disp: string; ordem: string };
-const EMPTY: F = { categoria: [], tamanho: [], preco: [], drop: "", disp: "", ordem: "destaques" };
+type F = { q: string; categoria: string[]; tamanho: string[]; preco: string[]; drop: string; disp: string; ordem: string };
+const EMPTY: F = { q: "", categoria: [], tamanho: [], preco: [], drop: "", disp: "", ordem: "destaques" };
+const ORDERS = SORTS.map(([k]) => k as string);
 
 function fromURL(): F {
   const q = readQuery();
   const list = (k: string) => (q.get(k) ? q.get(k)!.split(",") : []);
-  return { categoria: list("categoria"), tamanho: list("tamanho"), preco: list("preco"), drop: q.get("drop") ?? "", disp: q.get("disp") ?? "", ordem: q.get("ordem") ?? "destaques" };
+  const ordem = q.get("ordem") ?? "destaques";
+  return { q: (q.get("q") ?? "").slice(0, 60), categoria: list("categoria"), tamanho: list("tamanho"), preco: list("preco"), drop: q.get("drop") ?? "", disp: q.get("disp") ?? "", ordem: ORDERS.includes(ordem) ? ordem : "destaques" };
 }
 
 function Chip({ on, onClick, children, label }: { on: boolean; onClick: () => void; children: React.ReactNode; label?: string }) {
@@ -57,13 +61,15 @@ export default function ShopView() {
     const on = () => setF(fromURL());
     window.addEventListener("popstate", on);
     window.addEventListener("hashchange", on);
-    return () => (window.removeEventListener("popstate", on), window.removeEventListener("hashchange", on));
+    window.addEventListener("gs:query", on);
+    return () => (window.removeEventListener("popstate", on), window.removeEventListener("hashchange", on), window.removeEventListener("gs:query", on));
   }, []);
 
   const update = (patch: Partial<F>) => {
     const n = { ...f, ...patch };
     setF(n);
     const q = new URLSearchParams();
+    if (n.q) q.set("q", n.q);
     if (n.categoria.length) q.set("categoria", n.categoria.join(","));
     if (n.tamanho.length) q.set("tamanho", n.tamanho.join(","));
     if (n.preco.length) q.set("preco", n.preco.join(","));
@@ -74,19 +80,20 @@ export default function ShopView() {
   };
   const toggle = (k: "categoria" | "tamanho" | "preco", v: string) => update({ [k]: f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v] });
 
-  const status = (p: Product) => availability(p, p.drop ? dropPhase(getDrop(p.drop)!, now) : undefined);
+  const stock = useInventoryMap() ?? undefined;
+  const status = (p: Product) => availability(p, p.drop ? dropPhase(getDrop(p.drop)!, now, stock) : undefined, stock?.[p.slug]);
   const list = (() => {
     const r = PRODUCTS.filter(
       (p) =>
+        (!f.q || matchesQuery(p, f.q)) &&
         (!f.categoria.length || f.categoria.includes(p.category)) &&
-        (!f.tamanho.length || f.tamanho.some((s) => p.sizes.includes(s) && !p.soldOut.includes(s))) &&
+        (!f.tamanho.length || f.tamanho.some((s) => p.sizes.includes(s) && !sizeOut(stock?.[p.slug], s))) &&
         (!f.preco.length || PRICES.some(([k, , fn]) => f.preco.includes(k) && fn(p.price))) &&
         (!f.drop || (f.drop === "core" ? !p.drop : p.drop === f.drop)) &&
         (!f.disp || status(p) !== "sold-out"),
     );
     const s = [...r];
     if (f.ordem === "recentes") s.sort((a, b) => b.addedAt.localeCompare(a.addedAt) || a.rank - b.rank);
-    else if (f.ordem === "vendidos") s.sort((a, b) => a.rank - b.rank);
     else if (f.ordem === "menor") s.sort((a, b) => a.price - b.price);
     else if (f.ordem === "maior") s.sort((a, b) => b.price - a.price);
     else s.sort((a, b) => Number(b.featured) - Number(a.featured) || a.rank - b.rank);
@@ -94,11 +101,26 @@ export default function ShopView() {
     return s.sort((a, b) => Number(status(a) === "sold-out") - Number(status(b) === "sold-out"));
   })();
 
-  const activeCount = f.categoria.length + f.tamanho.length + f.preco.length + (f.drop ? 1 : 0) + (f.disp ? 1 : 0);
-  const title = f.categoria.length === 1 ? categoryName(f.categoria[0]) : f.drop === "core" ? "Linha Core" : f.drop ? `Drop ${f.drop}` : "Shop";
+  const activeCount = f.categoria.length + f.tamanho.length + f.preco.length + (f.drop ? 1 : 0) + (f.disp ? 1 : 0) + (f.q ? 1 : 0);
+  const title = f.q ? `“${f.q}”` : f.categoria.length === 1 ? categoryName(f.categoria[0]) : f.drop === "core" ? "Linha Core" : f.drop ? `Drop ${f.drop}` : "Loja";
+  const listKey = list.map((p) => p.slug).join();
+  useEffect(() => {
+    if (!ready || !listKey) return;
+    track("view_item_list", { ...itemPayload(listKey.split(",").map((slug) => ({ slug, qty: 1 }))), item_list_id: "loja", item_list_name: "Loja" });
+  }, [ready, listKey]);
 
   const filters = (
     <div className="flex flex-col gap-8">
+      {f.q && (
+        <div className="flex items-center justify-between gap-3 border border-line px-3 py-2 text-small">
+          <span>
+            Busca: <strong>{f.q}</strong>
+          </span>
+          <button type="button" onClick={() => update({ q: "" })} className="eyebrow link-u">
+            Limpar
+          </button>
+        </div>
+      )}
       <fieldset>
         <legend className="eyebrow mb-3 text-muted">Drop</legend>
         <div className="flex flex-wrap gap-1.5">
@@ -171,7 +193,7 @@ export default function ShopView() {
     <div className="wrap pt-10 pb-section lg:pt-14">
       <div className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-8">
         <div>
-          <p className="eyebrow text-muted">
+          <p className="eyebrow text-muted" role="status">
             {list.length} {list.length === 1 ? "peça" : "peças"}
           </p>
           <h1 className="font-display mt-3 text-d2">{title}</h1>
@@ -202,7 +224,10 @@ export default function ShopView() {
         <aside aria-label="Filtros" className="hidden lg:block">
           <div className="sticky top-[calc(var(--header-h)+2rem)]">{filters}</div>
         </aside>
-        <div aria-live="polite" aria-busy={!ready}>
+        <section aria-labelledby="shop-results" aria-busy={!ready}>
+          <h2 id="shop-results" className="sr-only">
+            Peças
+          </h2>
           {list.length ? (
             <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-3 md:gap-y-14">
               {list.map((p, i) => (
@@ -211,14 +236,14 @@ export default function ShopView() {
             </div>
           ) : (
             <div className="py-16">
-              <p className="font-display text-d4">Nenhuma peça com esses filtros.</p>
-              <p className="mt-3 text-muted">Tira um filtro ou volte para tudo.</p>
+              <p className="font-display text-d4">{f.q ? `Nada encontrado para “${f.q}”.` : "Nenhuma peça com esses filtros."}</p>
+              <p className="mt-3 text-muted">{f.q ? "Tente outro termo, como hoodie, camiseta ou boné." : "Tire um filtro ou volte para tudo."}</p>
               <button type="button" onClick={() => update(EMPTY)} className="btn btn-primary mt-6">
                 Limpar filtros
               </button>
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       <Drawer

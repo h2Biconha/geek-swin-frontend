@@ -48,3 +48,8 @@ next-env.d.ts
 
 # arquivo único gerado por npm run standalone
 /standalone-dist
+
+# banco local (PGlite) e resultados de teste
+/.data
+/test-results
+/playwright-report

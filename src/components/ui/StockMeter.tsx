@@ -1,22 +1,27 @@
-import type { Product } from "@/lib/catalog";
+import type { Inventory, Product } from "@/lib/catalog";
 
-/** Escassez real: só aparece quando o produto tem tiragem e estoque informados. */
-export default function StockMeter({ product: p, compact }: { product: Product; compact?: boolean }) {
-  if (p.edition == null || p.stockLeft == null) return null;
-  const pct = Math.max(0, Math.min(1, p.stockLeft / p.edition));
-  const low = p.stockLeft <= 20 || pct <= 0.15;
+/**
+ * Tiragem restante. Só aparece com número REAL do servidor (inventário) e para peça numerada.
+ * Sem servidor (prévia) mostra apenas o tamanho da tiragem planejada, sem contador.
+ */
+export default function StockMeter({ product: p, inv, compact }: { product: Product; inv?: Inventory; compact?: boolean }) {
+  if (p.edition == null) return null;
+  const left = inv?.editionLeft;
+  if (left == null)
+    return compact ? null : (
+      <p className="eyebrow text-muted">
+        Tiragem numerada · <span className="num text-fg">{p.edition}</span> peças · sem reposição
+      </p>
+    );
+  const pct = Math.max(0, Math.min(1, left / p.edition));
   return (
     <div className={compact ? "" : "w-full"}>
       <div className="flex items-baseline justify-between gap-3">
-        <span className={`eyebrow num ${low ? "text-accent-fg" : ""}`}>
-          {p.stockLeft === 0 ? "Esgotado" : `Restam ${p.stockLeft}`}
-        </span>
-        <span className="eyebrow num text-muted">
-          {String(p.stockLeft).padStart(3, "0")} / {p.edition}
-        </span>
+        <span className="eyebrow num">{left === 0 ? "Tiragem esgotada" : `${left} de ${p.edition} disponíveis`}</span>
+        {!compact && <span className="eyebrow text-muted">sem reposição</span>}
       </div>
-      <div className="mt-2 h-[2px] w-full bg-line" role="meter" aria-valuemin={0} aria-valuemax={p.edition} aria-valuenow={p.stockLeft} aria-label={`${p.stockLeft} de ${p.edition} peças restantes`}>
-        <div className="h-full origin-left bg-accent transition-transform duration-700 ease-out" style={{ transform: `scaleX(${pct})` }} />
+      <div className="mt-2 h-[2px] w-full bg-line" role="meter" aria-valuemin={0} aria-valuemax={p.edition} aria-valuenow={left} aria-label={`${left} de ${p.edition} peças disponíveis`}>
+        <div className="h-full origin-left bg-fg transition-transform duration-700 ease-out" style={{ transform: `scaleX(${pct})` }} />
       </div>
     </div>
   );

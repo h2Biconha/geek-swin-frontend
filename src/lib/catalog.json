@@ -1,9 +1,24 @@
 {
   "site": {
     "preview": true,
-    "previewNote": "Prévia da loja. Produtos, preços e estoque são de exemplo até o back-end entrar no ar."
+    "previewNote": "Prévia da loja: preços, condições e fichas técnicas estão em validação. Nada é cobrado.",
+    "specsConfirmed": false
   },
-  "commerce": { "freeShippingFrom": 349, "installments": 6, "pixDiscount": 0.05 },
+  "commerce": {
+    "currency": "BRL",
+    "freeShippingFrom": 349,
+    "installments": 6,
+    "installmentsInterestFree": true,
+    "pixDiscount": 0.05,
+    "maxQtyPerLine": 5,
+    "reservationMinutes": 30,
+    "exchangeDays": 30,
+    "handlingDays": 2,
+    "shippingTable": [
+      { "id": "economico", "name": "Econômico", "days": "6 a 9 dias úteis", "price": 24.9, "freeAbove": true },
+      { "id": "expresso", "name": "Expresso", "days": "2 a 4 dias úteis", "price": 39.9, "freeAbove": false }
+    ]
+  },
   "categories": [
     { "slug": "moletons", "name": "Moletons" },
     { "slug": "camisetas", "name": "Camisetas" },
@@ -22,11 +37,7 @@
       "columns": ["Tamanho", "Cintura", "Quadril", "Comprimento"],
       "rows": [["38", 76, 104, 104], ["40", 80, 108, 105], ["42", 84, 112, 106], ["44", 88, 116, 107], ["46", 92, 120, 108]]
     },
-    "cap": {
-      "label": "Medidas em cm.",
-      "columns": ["Tamanho", "Circunferência", "Aba"],
-      "rows": [["Único", "56 a 60 (regulável)", 7]]
-    },
+    "cap": { "label": "Medidas em cm.", "columns": ["Tamanho", "Circunferência", "Aba"], "rows": [["Único", "56 a 60 (regulável)", 7]] },
     "socks": {
       "label": "Escolha pela numeração do seu tênis.",
       "columns": ["Tamanho", "Calçado", "Cano"],
@@ -38,17 +49,20 @@
       "number": "001",
       "slug": "001-insert-coin",
       "name": "INSERT COIN",
-      "tagline": "Não é merch. É uniforme.",
+      "tagline": "Não é merch. É cultura.",
       "quote": "Você não precisa jogar para fazer parte.",
-      "concept": "A primeira ficha. Cinco peças pesadas, em preto, cimento e off-white, desenhadas para quem cresceu entre a tela de título e o rolê.",
+      "concept": "A primeira ficha. Cinco peças em preto, cimento e off-white, desenhadas para quem cresceu entre a tela de título e o rolê.",
       "manifesto": [
         "Todo jogo começa do mesmo jeito: uma tela parada, uma frase piscando e alguém decidindo entrar.",
-        "INSERT COIN é esse momento. O primeiro drop não tem personagem, não tem logo de jogo, não tem fantasia. Tem tecido de 520 g, modelagem larga e detalhes que só quem viveu reconhece.",
+        "INSERT COIN é esse momento. O primeiro drop não tem personagem, não tem logo de jogo, não tem fantasia. Tem modelagem larga e detalhes que só quem viveu reconhece.",
         "Cada peça sai numerada. Quando acaba, vai para o arquivo e não volta."
       ],
       "story": [
         { "title": "A ficha", "text": "No fliperama, a ficha era a entrada. Pagou, jogou. Aqui, a ficha é a peça: quem tem, estava lá no começo." },
-        { "title": "A tela de seleção", "text": "A moldura da Phantom Frame vem da tela de escolha de personagem. Você não escolhe um herói. Você se escolhe." },
+        {
+          "title": "A tela de seleção",
+          "text": "A moldura da Phantom Frame vem da tela de escolha de personagem. Você não escolhe um herói. Você se escolhe."
+        },
         { "title": "O número", "text": "Cada peça leva o número da tiragem na etiqueta das costas. 037/150 não é detalhe. É prova." }
       ],
       "opensAtUTC": "2026-10-10T23:00:00Z",
@@ -60,18 +74,33 @@
       "gallery": [],
       "video": null,
       "looks": [
-        { "n": "01", "name": "Ranked", "products": ["obsidian-shell-hoodie", "respawn-cargo"], "text": "Moletom pesado e cargo larga. O uniforme da final." },
-        { "n": "02", "name": "Off-line", "products": ["phantom-frame-tee", "void-wide-pant"], "text": "Off-white em cima, preto embaixo. Do rolê ao jantar sem trocar." },
-        { "n": "03", "name": "Lan House", "products": ["respawn-cap", "ggwp-core-tee", "lag-zero-socks"], "text": "Boné, camiseta preta e meia aparecendo. Simples e com atitude." }
+        {
+          "n": "01",
+          "name": "Ranked",
+          "products": ["obsidian-shell-hoodie", "respawn-cargo"],
+          "text": "Moletom pesado e cargo larga. O uniforme da final."
+        },
+        {
+          "n": "02",
+          "name": "Off-line",
+          "products": ["phantom-frame-tee", "void-wide-pant"],
+          "text": "Off-white em cima, preto embaixo. Do rolê ao jantar sem trocar."
+        },
+        {
+          "n": "03",
+          "name": "Lan House",
+          "products": ["respawn-cap", "ggwp-core-tee", "lag-zero-socks"],
+          "text": "Boné, camiseta preta e meia aparecendo. Simples e com atitude."
+        }
       ]
     },
     {
       "number": "002",
       "slug": "002",
       "name": null,
-      "tagline": "Ainda não dá pra ver.",
-      "quote": "Quem está no lobby fica sabendo primeiro.",
-      "concept": "O próximo drop está em produção. Nome, data e peças são revelados só para quem está na lista.",
+      "tagline": "Ainda sem nome.",
+      "quote": "Ainda sem data.",
+      "concept": "O próximo drop ainda não tem nome nem data. Quem está na lista recebe o aviso por e-mail quando houver.",
       "manifesto": [],
       "story": [],
       "opensAtUTC": null,
@@ -97,9 +126,7 @@
       "color": "Preto",
       "drop": "001",
       "edition": 150,
-      "stockLeft": 37,
       "sizes": ["P", "M", "G", "GG", "XG"],
-      "soldOut": ["P"],
       "sizeTable": "top",
       "addedAt": "2026-10-03",
       "rank": 1,
@@ -110,7 +137,13 @@
         { "src": "/art/hoodie-detail.svg", "view": "Detalhe" }
       ],
       "description": "A peça que abre o Drop 001. Ombro caído, capuz estruturado que não desaba e a frase INSERT COIN nas costas, com o número da sua peça na etiqueta.",
-      "fabric": ["Moletom 520 g/m², 100% algodão penteado", "Tingimento preto que segura a cor lavagem após lavagem", "Capuz forrado duplo e cordão chato", "Bolso canguru com reforço nas pontas", "Etiqueta azul tecida na barra"],
+      "fabric": [
+        "Moletom 520 g/m², 100% algodão penteado",
+        "Tingimento preto que segura a cor lavagem após lavagem",
+        "Capuz forrado duplo e cordão chato",
+        "Bolso canguru com reforço nas pontas",
+        "Etiqueta azul tecida na barra"
+      ],
       "fit": "Oversized: veste largo no seu tamanho de sempre. Se prefere mais justo, desça um tamanho."
     },
     {
@@ -124,9 +157,7 @@
       "color": "Off-white",
       "drop": "001",
       "edition": 300,
-      "stockLeft": 112,
       "sizes": ["P", "M", "G", "GG", "XG"],
-      "soldOut": [],
       "sizeTable": "top",
       "addedAt": "2026-10-03",
       "rank": 2,
@@ -137,7 +168,12 @@
         { "src": "/art/tee-detail.svg", "view": "Detalhe" }
       ],
       "description": "Off-white boxy com a moldura da tela de seleção em silk de alta densidade. Corte reto, manga larga e gola que não abre.",
-      "fabric": ["Malha 280 g/m², 100% algodão", "Gola com ribana dupla", "Pré-encolhida: o tamanho fica", "Silk de alta densidade com toque emborrachado"],
+      "fabric": [
+        "Malha 280 g/m², 100% algodão",
+        "Gola com ribana dupla",
+        "Pré-encolhida: o tamanho fica",
+        "Silk de alta densidade com toque emborrachado"
+      ],
       "fit": "Boxy: corpo largo e mais curto. Use seu tamanho de sempre."
     },
     {
@@ -151,9 +187,7 @@
       "color": "Preto",
       "drop": "001",
       "edition": 200,
-      "stockLeft": 64,
       "sizes": ["Único"],
-      "soldOut": [],
       "sizeTable": "cap",
       "addedAt": "2026-10-03",
       "rank": 4,
@@ -164,7 +198,12 @@
         { "src": "/art/cap-detail.svg", "view": "Detalhe" }
       ],
       "description": "Seis gomos em sarja pesada, aba curva pré-moldada e patch GS_ azul na lateral. Fecho de metal regulável atrás.",
-      "fabric": ["Sarja de algodão 340 g/m²", "Aba com entretela firme, não deforma", "Fecho de metal fosco regulável", "Ilhós bordados para ventilação"],
+      "fabric": [
+        "Sarja de algodão 340 g/m²",
+        "Aba com entretela firme, não deforma",
+        "Fecho de metal fosco regulável",
+        "Ilhós bordados para ventilação"
+      ],
       "fit": "Tamanho único, regulável de 56 a 60 cm."
     },
     {
@@ -178,9 +217,7 @@
       "color": "Cimento",
       "drop": "001",
       "edition": 200,
-      "stockLeft": 80,
       "sizes": ["38", "40", "42", "44", "46"],
-      "soldOut": [],
       "sizeTable": "bottom",
       "addedAt": "2026-10-03",
       "rank": 3,
@@ -191,7 +228,12 @@
         { "src": "/art/cargo-detail.svg", "view": "Detalhe" }
       ],
       "description": "Cargo cinza-cimento de perna larga, bolsos de fole com lapela e barra com cordão. Fecha o look Ranked com o Obsidian Shell.",
-      "fabric": ["Sarja 300 g/m², 98% algodão, 2% elastano", "Bolsos laterais de fole com lapela", "Cós com elástico interno nas laterais", "Barra com cordão regulável"],
+      "fabric": [
+        "Sarja 300 g/m², 98% algodão, 2% elastano",
+        "Bolsos laterais de fole com lapela",
+        "Cós com elástico interno nas laterais",
+        "Barra com cordão regulável"
+      ],
       "fit": "Wide leg: perna larga e reta. Escolha pela sua numeração de calça."
     },
     {
@@ -200,24 +242,24 @@
       "name": "Lag Zero Socks · 3 pares",
       "category": "acessorios",
       "price": 69.9,
-      "compareAt": 89.9,
+      "compareAt": null,
       "specs": "Cano alto · Felpa no pé",
       "color": "Off-white e preto",
       "drop": "001",
       "edition": null,
-      "stockLeft": null,
       "sizes": ["38-40", "41-43", "44-46"],
-      "soldOut": [],
       "sizeTable": "socks",
       "addedAt": "2026-10-03",
       "rank": 6,
       "featured": false,
-      "media": [
-        { "src": "/art/socks-front.svg", "view": "Kit" },
-        { "src": "/art/socks-detail.svg", "view": "Detalhe" }
-      ],
+      "media": [{ "src": "/art/socks-front.svg", "view": "Kit" }, { "src": "/art/socks-detail.svg", "view": "Detalhe" }],
       "description": "Três pares de cano alto, punho preto e listra dupla azul. Felpa na sola para aguentar o dia inteiro de tênis.",
-      "fabric": ["80% algodão, 18% poliamida, 2% elastano", "Sola felpuda que amortece", "Punho com elástico que não marca", "Calcanhar e ponta reforçados"],
+      "fabric": [
+        "80% algodão, 18% poliamida, 2% elastano",
+        "Sola felpuda que amortece",
+        "Punho com elástico que não marca",
+        "Calcanhar e ponta reforçados"
+      ],
       "fit": "Escolha pela numeração do seu tênis."
     },
     {
@@ -231,9 +273,7 @@
       "color": "Preto",
       "drop": null,
       "edition": null,
-      "stockLeft": null,
       "sizes": ["P", "M", "G", "GG", "XG"],
-      "soldOut": ["XG"],
       "sizeTable": "top",
       "addedAt": "2026-09-20",
       "rank": 5,
@@ -253,14 +293,12 @@
       "name": "Void Wide Pant",
       "category": "calcas",
       "price": 239.9,
-      "compareAt": 279.9,
+      "compareAt": null,
       "specs": "Sarja 280 g/m² · Wide",
       "color": "Preto",
       "drop": null,
       "edition": null,
-      "stockLeft": null,
       "sizes": ["38", "40", "42", "44", "46"],
-      "soldOut": ["46"],
       "sizeTable": "bottom",
       "addedAt": "2026-09-20",
       "rank": 7,
@@ -279,23 +317,18 @@
       "number": "C03",
       "name": "Kit Squad · 3 Oversized",
       "category": "kits",
-      "price": 429.9,
-      "compareAt": 539.7,
+      "price": 349.9,
+      "compareAt": null,
       "specs": "3 camisetas · preto, cimento e off-white",
       "color": "Preto, cimento e off-white",
       "drop": null,
       "edition": null,
-      "stockLeft": null,
       "sizes": ["P", "M", "G", "GG", "XG"],
-      "soldOut": [],
       "sizeTable": "top",
       "addedAt": "2026-09-20",
       "rank": 8,
       "featured": false,
-      "media": [
-        { "src": "/art/kit-front.svg", "view": "Kit" },
-        { "src": "/art/kit-detail.svg", "view": "Detalhe" }
-      ],
+      "media": [{ "src": "/art/kit-front.svg", "view": "Kit" }, { "src": "/art/kit-detail.svg", "view": "Detalhe" }],
       "description": "Três oversized da linha Core, preta, cimento e off-white, no mesmo tamanho. Cada uma sai mais barata que a avulsa.",
       "fabric": ["Malha 240 g/m², 100% algodão", "Pré-encolhida", "Gola com ribana dupla", "Embalagem única, pronta para presente"],
       "fit": "As três vêm no tamanho escolhido."

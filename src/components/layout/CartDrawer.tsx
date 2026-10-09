@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useHydrated } from "@/lib/store";
-import { cart, countItems, freeShippingGap, isUnavailable, lastAdded, MAX_QTY, subtotal, useCart } from "@/lib/cart";
-import { asset, brl, FREE_SHIPPING_FROM, getDrop, getProduct, installment, shipsLabel } from "@/lib/catalog";
+import { cart, countItems, freeShippingGap, lastAdded, lineProblem, maxQtyFor, subtotal, useCart } from "@/lib/cart";
+import { asset, brl, COMMERCE, FREE_SHIPPING_FROM, getDrop, getProduct, installment, shipsLabel } from "@/lib/catalog";
+import { itemPayload, track } from "@/lib/analytics";
+import { useInventoryMap } from "@/lib/inventory";
 import { useDropPhase } from "@/lib/time";
 import { closeOverlay, overlay } from "@/lib/ui";
 import Drawer from "../ui/Drawer";
@@ -28,10 +30,17 @@ export default function CartDrawer() {
     setGoing(false);
   }
 
+  const stock = useInventoryMap() ?? undefined;
+  // abriu a bag: evento view_cart (uma vez por abertura)
+  useEffect(() => {
+    if (open && items.length) track("view_cart", itemPayload(items));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const count = countItems(items);
   const sub = subtotal(items);
   const gap = freeShippingGap(items);
-  const blocked = items.some(isUnavailable);
+  const blocked = items.some((i) => lineProblem(i, stock?.[i.slug]));
   const presale = phase === "presale" && items.some((i) => getProduct(i.slug)?.drop === drop.number);
 
   return (
@@ -49,12 +58,15 @@ export default function CartDrawer() {
               <dd>{gap === 0 ? <span className="text-accent-fg">Grátis</span> : "Calculado no checkout"}</dd>
               <dt className="mt-2 font-semibold">Total</dt>
               <dd className="mt-2 font-semibold">{brl(sub)}</dd>
-              <dd className="col-span-2 text-muted">ou 6x de {installment(sub)} sem juros</dd>
+              <dd className="col-span-2 text-muted">
+                ou até {COMMERCE.installments}x de {installment(sub)}
+                {COMMERCE.installmentsInterestFree ? " sem juros" : ""} no cartão
+              </dd>
             </dl>
             {presale && drop.shipsFrom && <p className="text-small text-muted">Tem peça de pré-venda: o pedido inteiro sai a partir de {shipsLabel(drop.shipsFrom)}.</p>}
             {blocked && (
               <p role="alert" className="field-error mt-0">
-                Um tamanho esgotou. Remova o item marcado para seguir.
+                Ajuste os itens marcados para seguir.
               </p>
             )}
             <Link
@@ -90,7 +102,7 @@ export default function CartDrawer() {
         </div>
       ) : !items.length ? (
         <div className="px-5">
-          <EmptyState code="INVENTORY · 0/0" title="Your inventory is empty" text="Nada na bag ainda. Volte para o lobby e veja o que está no drop." cta="Explore the drop" href={`/drops/${drop.slug}`} onClick={closeOverlay} />
+          <EmptyState level={2} code="BAG · 0" title="Sua bag está vazia" text="Nada por aqui ainda. Veja as peças do drop atual." cta="Ver o drop" href={`/drops/${drop.slug}`} onClick={closeOverlay} />
         </div>
       ) : (
         <>
@@ -111,7 +123,9 @@ export default function CartDrawer() {
           <ul>
             {items.map((i) => {
               const p = getProduct(i.slug)!;
-              const out = isUnavailable(i);
+              const problem = lineProblem(i, stock?.[i.slug]);
+              const out = problem === "esgotado";
+              const max = maxQtyFor(i, stock?.[i.slug]);
               const fresh = lastAdded === `${i.slug}|${i.size}`;
               return (
                 <li key={`${i.slug}-${i.size}`} className={`flex gap-4 border-b border-line px-5 py-5 ${fresh ? "animate-[rise_.4s_var(--ease-out)]" : ""}`}>
@@ -129,20 +143,22 @@ export default function CartDrawer() {
                       Tam. {i.size}
                       {p.drop ? ` · Drop ${p.drop}` : ""}
                     </p>
-                    {out && <p className="field-error">Esse tamanho esgotou.</p>}
+                    {problem && (
+                      <p className="field-error">{out ? "Esse tamanho esgotou. Remova para seguir." : `Só ${max} disponível${max > 1 ? "is" : ""}. Diminua a quantidade.`}</p>
+                    )}
                     <div className="mt-auto flex items-center justify-between pt-3">
                       <div className="flex items-center border border-line" role="group" aria-label={`Quantidade de ${p.name}`}>
-                        <button type="button" onClick={() => cart.setQty(i.slug, i.size, i.qty - 1)} className="grid size-10 place-items-center" aria-label="Diminuir">
+                        <button type="button" onClick={() => cart.setQty(i.slug, i.size, i.qty - 1)} className="grid size-11 place-items-center" aria-label={i.qty === 1 ? `Remover ${p.name}` : `Diminuir quantidade de ${p.name}`}>
                           <Icon name="minus" size={14} />
                         </button>
                         <span className="num w-7 text-center text-small" aria-live="polite">
                           {i.qty}
                         </span>
-                        <button type="button" disabled={i.qty >= MAX_QTY || out} onClick={() => cart.setQty(i.slug, i.size, i.qty + 1)} className="grid size-10 place-items-center disabled:opacity-30" aria-label="Aumentar">
+                        <button type="button" disabled={i.qty >= max || out} onClick={() => cart.setQty(i.slug, i.size, i.qty + 1)} className="grid size-11 place-items-center disabled:opacity-30" aria-label={`Aumentar quantidade de ${p.name}`}>
                           <Icon name="plus" size={14} />
                         </button>
                       </div>
-                      <button type="button" onClick={() => cart.remove(i.slug, i.size)} className="eyebrow min-h-10 text-muted hover:text-fg">
+                      <button type="button" onClick={() => cart.remove(i.slug, i.size)} className="eyebrow min-h-11 text-muted hover:text-fg" aria-label={`Remover ${p.name}, tamanho ${i.size}`}>
                         <span className="link-u">Remover</span>
                       </button>
                     </div>

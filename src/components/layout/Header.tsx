@@ -62,7 +62,12 @@ export default function Header() {
               className="eyebrow relative inline-flex min-h-11 items-center gap-1.5 text-label text-fg after:absolute after:inset-x-0 after:bottom-2.5 after:h-px after:origin-left after:scale-x-0 after:bg-accent-fg after:transition-transform after:duration-300 hover:after:scale-x-100 aria-[current=page]:after:scale-x-100"
             >
               {n.label}
-              {n.href === "/drops" && liveDot && <span aria-label="drop aberto" className="size-1.5 bg-accent" />}
+              {n.href === "/drops" && liveDot && (
+                <>
+                  <span aria-hidden className="size-1.5 bg-accent" />
+                  <span className="sr-only">(aberto)</span>
+                </>
+              )}
             </Link>
           ))}
         </nav>
@@ -79,7 +84,7 @@ export default function Header() {
           <Link href="/account" className="hidden min-h-11 min-w-11 items-center justify-center lg:inline-flex" aria-label="Minha conta">
             <Icon name="user" />
           </Link>
-          <Link href="/wishlist" className="relative hidden min-h-11 min-w-11 items-center justify-center sm:inline-flex" aria-label={`Wishlist, ${wish} ${wish === 1 ? "item" : "itens"}`}>
+          <Link href="/wishlist" className="relative hidden min-h-11 min-w-11 items-center justify-center sm:inline-flex" aria-label={`Favoritos, ${wish} ${wish === 1 ? "item" : "itens"}`}>
             <Icon name="heart" filled={wish > 0} />
             {wish > 0 && <span className="num absolute top-1.5 right-0.5 font-mono text-[0.6875rem] leading-none">{wish}</span>}
           </Link>

@@ -13,7 +13,7 @@ import DropView from "@/components/views/DropView";
 import DropsView from "@/components/views/DropsView";
 import HelpView from "@/components/views/HelpView";
 import HomeView from "@/components/views/HomeView";
-import MembersView from "@/components/views/MembersView";
+import LegalView from "@/components/views/LegalView";
 import NotFoundView from "@/components/views/NotFoundView";
 import ProductView from "@/components/views/ProductView";
 import ShopView from "@/components/views/ShopView";
@@ -28,11 +28,12 @@ function route(path: string): Route {
   const [, a, b] = path.split("/");
   if (!a) return { page: <HomeView />, title: `${BRAND.name} · Streetwear nascido da cultura gamer` };
   const simple: Record<string, { el: () => React.ReactNode; name: string }> = {
-    shop: { el: () => <ShopView />, name: "Shop" },
-    wishlist: { el: () => <WishlistView />, name: "Wishlist" },
-    account: { el: () => <AccountView />, name: "Minha GEEK SWIM" },
-    members: { el: () => <MembersView />, name: "Members" },
-    about: { el: () => <AboutView />, name: "About" },
+    shop: { el: () => <ShopView />, name: "Loja" },
+    wishlist: { el: () => <WishlistView />, name: "Favoritos" },
+    account: { el: () => <AccountView />, name: "Minha conta" },
+    about: { el: () => <AboutView />, name: "Sobre" },
+    privacy: { el: () => <LegalView doc="privacy" />, name: "Privacidade" },
+    terms: { el: () => <LegalView doc="terms" />, name: "Termos de uso" },
     help: { el: () => <HelpView />, name: "Ajuda" },
     checkout: { el: () => <CheckoutView />, name: "Checkout" },
   };
@@ -46,7 +47,7 @@ function route(path: string): Route {
     const p = getProduct(b);
     if (p) return { page: <ProductView product={p} />, title: `${p.name} · ${BRAND.name}` };
   }
-  return { page: <NotFoundView />, title: `Player not found · ${BRAND.name}` };
+  return { page: <NotFoundView />, title: `Página não encontrada · ${BRAND.name}` };
 }
 
 function App() {

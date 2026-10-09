@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/brand";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/checkout", "/account", "/wishlist", "/api/"] }],
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/checkout", "/account", "/wishlist", "/order/", "/admin", "/unsubscribe", "/api/"] }],
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

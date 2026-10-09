@@ -321,9 +321,14 @@
 .page-enter { animation: rise 0.45s var(--ease-out) both; }
 .skeleton { background: linear-gradient(90deg, var(--studio) 0%, color-mix(in oklab, var(--studio) 60%, white) 50%, var(--studio) 100%) 0 0 / 200% 100%; animation: shimmer 1.4s linear infinite; }
 
-/* revelação no scroll: só esconde se o JS estiver ativo (sem JS, tudo aparece) */
-.js [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out); transition-delay: calc(var(--i, 0) * 70ms); }
-.js [data-reveal].is-in { opacity: 1; transform: none; }
+/* revelação no scroll: só CSS (scroll-driven animation). Navegador sem suporte mostra tudo parado.
+   Não esconde nada antes do JS, então não atrasa o LCP nem pisca na hidratação. */
+@keyframes reveal { from { opacity: 0; transform: translateY(24px); } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] { animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -332,7 +337,6 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .js [data-reveal] { opacity: 1; transform: none; }
 }
 
 /* iOS dá zoom em campo com menos de 16px */
@@ -340,10 +344,10 @@
   input, select, textarea { font-size: 16px !important; }
 }
 
-/* loading da marca (ver LoadingScreen.tsx) */
-.gs-loader { display: none; }
-.gs-boot .gs-loader { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; transition: opacity .45s var(--ease-out), visibility .45s; }
-.gs-boot.gs-booted .gs-loader { opacity: 0; visibility: hidden; }
-.gs-loader-bar { width: 8rem; height: 1px; background: var(--line); position: relative; overflow: hidden; }
-.gs-loader-bar::after { content: ""; position: absolute; inset: 0; background: var(--accent); transform-origin: left; animation: load .65s var(--ease-out) forwards; }
-@keyframes load { from { transform: scaleX(0); } }
+/* textos legais: listas e links legíveis sem plugin de tipografia */
+@layer components {
+  .prose-legal > * + * { margin-top: 1rem; }
+  .prose-legal ul { display: grid; gap: 0.75rem; padding-left: 1.1rem; list-style: square; }
+  .prose-legal b { color: var(--fg); font-weight: 600; }
+  .prose-legal a { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
+}

@@ -1,52 +1,47 @@
 import { track } from "./analytics";
+import { STORE_CONNECTED } from "./mode";
+import { isValidEmail, isValidWhatsapp, onlyDigits } from "./validate";
 
 /**
- * Cadastro na lista (lobby, aviso de drop, "avisar-me", members).
- *
- * HOJE: NÃO ESTÁ CONECTADO. A função valida e responde "not_connected" depois de um instante,
- * e a interface mostra isso com honestidade. Nenhum e-mail ou WhatsApp é salvo.
- *
- * PARA LIGAR: defina NEXT_PUBLIC_SUBSCRIBE_URL (ex.: /api/subscribe) e implemente a rota
- * conforme o contrato em BACKEND.md > Lista de e-mails.
+ * Cadastro na lista (lista do drop, "avise-me" de tamanho esgotado).
+ * Com a loja conectada (STORE_MODE test/live) grava em POST /api/subscribe.
+ * Na prévia responde "not_connected" e a interface diz que nada foi salvo.
  */
-export type SubscribeInput = { email: string; whatsapp?: string; consent: boolean; source: string; product?: string; size?: string };
-export type SubscribeResult = { ok: true } | { ok: false; reason: "invalid_email" | "invalid_whatsapp" | "no_consent" | "not_connected" | "error" };
+export type SubscribeInput = { email: string; whatsapp?: string; consent: boolean; source: string; product?: string; size?: string; website?: string };
+export type SubscribeResult = { ok: true; isNew: boolean } | { ok: false; reason: "invalid_email" | "invalid_whatsapp" | "no_consent" | "not_connected" | "rate_limited" | "error" };
 
-export const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
-export const onlyDigits = (v: string) => v.replace(/\D/g, "");
-export const isValidWhatsapp = (v: string) => !v || /^(55)?\d{10,11}$/.test(onlyDigits(v));
-export const maskPhone = (v: string) => {
-  const d = onlyDigits(v).slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, d.length - 4)}-${d.slice(-4)}`;
-};
+export { CONSENT_TEXT } from "./consentText";
 
-const ENDPOINT = process.env.NEXT_PUBLIC_SUBSCRIBE_URL;
-export const SUBSCRIBE_CONNECTED = Boolean(ENDPOINT);
+export const SUBSCRIBE_CONNECTED = STORE_CONNECTED;
 
 export async function subscribe(input: SubscribeInput): Promise<SubscribeResult> {
   if (!isValidEmail(input.email)) return { ok: false, reason: "invalid_email" };
   if (input.whatsapp && !isValidWhatsapp(input.whatsapp)) return { ok: false, reason: "invalid_whatsapp" };
   if (!input.consent) return { ok: false, reason: "no_consent" };
-  if (!ENDPOINT) {
-    await new Promise((r) => setTimeout(r, 500));
+  if (!STORE_CONNECTED) {
+    await new Promise((r) => setTimeout(r, 400));
     return { ok: false, reason: "not_connected" };
   }
   try {
-    const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, whatsapp: input.whatsapp ? onlyDigits(input.whatsapp) : undefined }) });
-    if (!res.ok && res.status !== 200) return { ok: false, reason: "error" };
-    track("sign_up", { source: input.source });
-    return { ok: true };
+    const res = await fetch("/api/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, email: input.email.trim(), whatsapp: input.whatsapp ? onlyDigits(input.whatsapp) : undefined }) });
+    if (res.status === 429) return { ok: false, reason: "rate_limited" };
+    if (res.status === 400) {
+      const e = ((await res.json().catch(() => ({}))) as { error?: string }).error;
+      return { ok: false, reason: e === "whatsapp_invalido" ? "invalid_whatsapp" : e === "sem_consentimento" ? "no_consent" : "invalid_email" };
+    }
+    if (!res.ok) return { ok: false, reason: "error" };
+    track("sign_up", { method: input.source });
+    return { ok: true, isNew: res.status === 201 };
   } catch {
     return { ok: false, reason: "error" };
   }
 }
 
 export const SUBSCRIBE_MESSAGES: Record<Exclude<SubscribeResult, { ok: true }>["reason"], string> = {
-  invalid_email: "Confere o e-mail. Algo como nome@gmail.com.",
+  invalid_email: "Confira o e-mail. Algo como nome@gmail.com.",
   invalid_whatsapp: "WhatsApp com DDD, só números. Ou deixe em branco.",
   no_consent: "Marque a autorização para a gente poder te avisar.",
-  not_connected: "Prévia: a lista ainda não está conectada, então nada foi salvo. Isso liga junto com o back-end.",
-  error: "Não deu certo agora. Tenta de novo em instantes.",
+  not_connected: "Esta é uma prévia: a lista ainda não está ligada, então nada foi salvo.",
+  rate_limited: "Muitas tentativas seguidas. Tente de novo mais tarde.",
+  error: "Não deu certo agora. Tente de novo em instantes.",
 };

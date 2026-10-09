@@ -1,4 +1,6 @@
-import { brl, discountPct, installment, pixPrice, type Product } from "@/lib/catalog";
+import { brl, COMMERCE, discountPct, installment, pixPrice, type Product } from "@/lib/catalog";
+
+/** compareAt (preço "de") só quando o produto foi vendido de verdade por aquele preço antes (CDC art. 37: nada de "de/por" fictício). */
 
 export default function Price({ product: p, size = "md", showInstallments }: { product: Product; size?: "md" | "lg"; showInstallments?: boolean }) {
   const off = discountPct(p);
@@ -21,7 +23,7 @@ export default function Price({ product: p, size = "md", showInstallments }: { p
       </div>
       {showInstallments && (
         <p className="mt-1 text-small text-muted">
-          ou 6x de {installment(p.price)} sem juros · {brl(pixPrice(p.price))} no Pix
+          ou {COMMERCE.installments}x de {installment(p.price)}{COMMERCE.installmentsInterestFree ? " sem juros" : ""} · {brl(pixPrice(p.price))} no Pix
         </p>
       )}
     </div>

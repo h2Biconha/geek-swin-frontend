@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { cart } from "@/lib/cart";
-import type { Product } from "@/lib/catalog";
+import { sizeOut, type Product } from "@/lib/catalog";
 import Media from "../ui/Media";
 import Price from "../ui/Price";
 import StockMeter from "../ui/StockMeter";
@@ -15,8 +15,8 @@ import { STATUS_BADGE, useAvailability } from "./status";
  * Card de produto. Hover (desktop) troca frente → costas e mostra o quick add por tamanho.
  * No toque, o botão "+" abre os tamanhos. Clicar no tamanho já põe na bag.
  */
-export default function ProductCard({ product: p, priority, index = 0 }: { product: Product; priority?: boolean; index?: number }) {
-  const { status, phase } = useAvailability(p);
+export default function ProductCard({ product: p, priority }: { product: Product; priority?: boolean; index?: number }) {
+  const { status, phase, inv } = useAvailability(p);
   const [quick, setQuick] = useState(false);
   const href = `/product/${p.slug}`;
   const badge = STATUS_BADGE[status];
@@ -24,9 +24,9 @@ export default function ProductCard({ product: p, priority, index = 0 }: { produ
   const [front, back] = p.media;
 
   return (
-    <article className="group relative" data-reveal style={{ "--i": index % 4 } as React.CSSProperties}>
+    <article className="group relative">
       <div className="studio relative aspect-[4/5] overflow-hidden">
-        <Link href={href} className="absolute inset-0" aria-label={p.name} data-cursor="view" tabIndex={-1}>
+        <Link href={href} className="absolute inset-0" aria-label={p.name} tabIndex={-1}>
           <Media media={front} alt={`${p.name}, ${front.view.toLowerCase()}`} priority={priority} className={`absolute inset-0 size-full object-contain p-[8%] transition-[opacity,transform] duration-700 ease-out ${back ? "group-hover:opacity-0" : ""} group-hover:scale-[1.03] ${status === "sold-out" ? "opacity-60 grayscale" : ""}`} />
           {back && <Media media={back} alt="" className="absolute inset-0 size-full scale-[1.03] object-contain p-[8%] opacity-0 transition-[opacity,transform] duration-700 ease-out group-hover:scale-100 group-hover:opacity-100" />}
         </Link>
@@ -60,7 +60,7 @@ export default function ProductCard({ product: p, priority, index = 0 }: { produ
               <p className="eyebrow px-1 pb-1.5 text-muted">Adicionar · tamanho</p>
               <div className="flex flex-wrap gap-1">
                 {p.sizes.map((s) => {
-                  const out = p.soldOut.includes(s);
+                  const out = sizeOut(inv, s);
                   return (
                     <button
                       key={s}
@@ -94,7 +94,7 @@ export default function ProductCard({ product: p, priority, index = 0 }: { produ
         <p className="eyebrow text-muted">
           <span className="sr-only">Tamanhos: </span>
           {p.sizes.map((s, i) => (
-            <span key={s} className={p.soldOut.includes(s) ? "line-through" : "text-fg"}>
+            <span key={s} className={sizeOut(inv, s) ? "line-through" : "text-fg"}>
               {s}
               {i < p.sizes.length - 1 ? " · " : ""}
             </span>
@@ -102,7 +102,7 @@ export default function ProductCard({ product: p, priority, index = 0 }: { produ
         </p>
         {status !== "sold-out" && p.edition != null && (
           <div className="mt-1">
-            <StockMeter product={p} compact />
+            <StockMeter product={p} inv={inv} compact />
           </div>
         )}
       </div>

@@ -55,7 +55,6 @@ export default function ProductGallery({ product: p }: { product: Product }) {
             key={m.src}
             type="button"
             onClick={() => setZoomAt(i)}
-            data-cursor="zoom"
             className={`studio group relative overflow-hidden ${i === 0 || media.length === 2 ? "col-span-2 aspect-[5/5]" : "aspect-[4/5]"} cursor-zoom-in`}
             aria-label={`Ampliar ${m.view.toLowerCase()}`}
           >

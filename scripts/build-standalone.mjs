@@ -48,7 +48,6 @@ for (const f of readdirSync(join(root, "public/art"))) {
   if (f.endsWith(".svg")) assets[`/art/${f}`] = `data:image/svg+xml;base64,${readFileSync(join(root, "public/art", f)).toString("base64")}`;
 }
 const icon = `data:image/svg+xml;base64,${readFileSync(join(root, "src/app/icon.svg")).toString("base64")}`;
-const boot = (readFileSync(join(root, "src/components/layout/LoadingScreen.tsx"), "utf8").match(/BOOT_SCRIPT = `([^`]+)`/) ?? [])[1] ?? "";
 
 const html = `<!doctype html>
 <html lang="pt-BR">
@@ -61,7 +60,6 @@ const html = `<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap">
-<script>${boot}</script>
 <script>window.__GS_HASH=true;window.__GS_ASSETS=${JSON.stringify(assets)};</script>
 <style>:root{--font-archivo:"Archivo";--font-jetbrains:"JetBrains Mono"}</style>
 <style>${css}</style>

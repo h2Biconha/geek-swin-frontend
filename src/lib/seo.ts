@@ -1,7 +1,10 @@
 import { BRAND, SITE_URL } from "./brand";
 import { availability, dropPhase, dropTitle, type Drop, type Product } from "./catalog";
 
-/** Dados estruturados (schema.org). Renderizados como <script type="application/ld+json">. */
+/**
+ * Dados estruturados (schema.org). Renderizados como <script type="application/ld+json">.
+ * Sem aggregateRating/review enquanto não houver avaliação real.
+ */
 export const abs = (path: string) => `${SITE_URL}${path}`;
 
 export const organizationLd = () => ({
@@ -28,7 +31,8 @@ export const breadcrumbLd = (items: [string, string][]) => ({
 });
 
 export function productLd(p: Product, d?: Drop) {
-  const a = availability(p, d ? dropPhase(d, Date.now()) : undefined);
+  const phase = d ? dropPhase(d, Date.now()) : undefined;
+  const a = availability(p, phase);
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -43,7 +47,8 @@ export function productLd(p: Product, d?: Drop) {
       url: abs(`/product/${p.slug}`),
       priceCurrency: "BRL",
       price: p.price.toFixed(2),
-      availability: a === "sold-out" ? "https://schema.org/SoldOut" : a === "coming-soon" ? "https://schema.org/PreOrder" : d?.presale ? "https://schema.org/PreOrder" : "https://schema.org/InStock",
+      // antes de abrir não dá para comprar (OutOfStock); pré-venda aberta = PreOrder
+      availability: a === "sold-out" ? "https://schema.org/SoldOut" : a === "coming-soon" ? "https://schema.org/OutOfStock" : phase === "presale" ? "https://schema.org/PreOrder" : "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
     },
   };

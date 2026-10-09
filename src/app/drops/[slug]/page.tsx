@@ -7,6 +7,7 @@ import { breadcrumbLd, dropLd } from "@/lib/seo";
 
 export const generateStaticParams = () => DROPS.map((d) => ({ slug: d.slug }));
 export const dynamicParams = false;
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: PageProps<"/drops/[slug]">): Promise<Metadata> {
   const d = getDrop((await params).slug);

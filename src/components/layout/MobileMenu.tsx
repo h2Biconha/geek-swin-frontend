@@ -35,9 +35,9 @@ export default function MobileMenu() {
       <div className="grid grid-cols-2 gap-px px-5 pt-6">
         {[
           ["Minha conta", "/account"],
-          ["Wishlist", "/wishlist"],
+          ["Favoritos", "/wishlist"],
           ["Ajuda", "/help"],
-          ["Archive", "/drops#archive"],
+          ["Arquivo", "/drops#arquivo"],
         ].map(([l, h]) => (
           <Link key={h} href={h} onClick={closeOverlay} className="eyebrow flex min-h-12 items-center text-fg">
             {l}

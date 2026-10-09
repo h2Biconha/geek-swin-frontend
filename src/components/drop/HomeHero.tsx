@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { asset, dateLabel, dropTitle, editionTotal, PHASE_LABEL, timeLabel, type Drop } from "@/lib/catalog";
+import { BRAND } from "@/lib/brand";
+import { asset, dateLabel, dropProducts, dropTitle, editionTotal, PHASE_LABEL, SPECS_CONFIRMED, timeLabel, type Drop } from "@/lib/catalog";
 import { useDropPhase } from "@/lib/time";
 import Media from "../ui/Media";
 
@@ -15,6 +16,12 @@ export default function HomeHero({ drop }: { drop: Drop }) {
   const ref = useRef<HTMLElement>(null);
   const total = editionTotal(drop);
   const [l1, ...rest] = dropTitle(drop).split(" ");
+  const lead = dropProducts(drop).find((p) => p.edition);
+  // ficha técnica só aparece no hero quando confirmada com a produção (catalog.json > site.specsConfirmed)
+  const notes: [string, string][] = [
+    ...(SPECS_CONFIRMED ? ([["top-[12%] left-[84%]", "Capuz forrado duplo"], ["bottom-[36%] right-[90%]", "520 g/m²"]] as [string, string][]) : []),
+    ...(lead ? ([["bottom-[18%] right-[86%]", `N° ___/${lead.edition}`]] as [string, string][]) : []),
+  ];
 
   return (
     <section
@@ -43,16 +50,11 @@ export default function HomeHero({ drop }: { drop: Drop }) {
           >
             <img src={asset(drop.heroArt)} alt="" className="size-full animate-[float_7s_ease-in-out_infinite] object-contain" />
             {/* anotações de ficha técnica */}
-            {[
-              // posições escolhidas para cair nas áreas vazias do título (acima de COIN, abaixo de INSERT)
-              ["top-[12%] left-[84%]", "Capuz forrado duplo"],
-              ["bottom-[36%] right-[90%]", "520 g/m²"],
-              ["bottom-[18%] right-[86%]", "N° ___/150"],
-            ].map(([pos, t], i) => (
+            {notes.map(([pos, t], i) => (
               <span key={t} className={`eyebrow absolute hidden items-center gap-2 whitespace-nowrap text-muted xl:flex ${pos} animate-[fade-in_.8s_var(--ease-out)_both]`} style={{ animationDelay: `${0.8 + i * 0.15}s` }}>
-                {i === 0 && <span className="h-px w-10 bg-line-strong" />}
+                {pos.startsWith("top") && <span className="h-px w-10 bg-line-strong" />}
                 {t}
-                {i !== 0 && <span className="h-px w-10 bg-line-strong" />}
+                {!pos.startsWith("top") && <span className="h-px w-10 bg-line-strong" />}
               </span>
             ))}
           </div>
@@ -61,7 +63,9 @@ export default function HomeHero({ drop }: { drop: Drop }) {
 
       <div className="wrap relative flex flex-1 flex-col pt-6 pb-8 lg:pt-10 lg:pb-12">
         <div className="flex animate-[fade-in_.8s_var(--ease-out)_both] flex-wrap items-center justify-between gap-3">
-          <p className="eyebrow text-muted">[Drop {drop.number}]</p>
+          <p className="eyebrow text-muted">
+            {BRAND.name} · Drop {drop.number}
+          </p>
           <p className="eyebrow flex items-center gap-2 text-fg">
             <span className="size-1.5 animate-blink bg-accent" aria-hidden />
             {PHASE_LABEL[phase]}
@@ -101,8 +105,8 @@ export default function HomeHero({ drop }: { drop: Drop }) {
               <Link href={`/drops/${drop.slug}`} className="btn btn-primary btn-lg">
                 Explorar drop
               </Link>
-              <Link href="/#como-funciona" className="btn btn-secondary btn-lg">
-                Como funciona
+              <Link href="/about" className="btn btn-secondary btn-lg">
+                Conhecer a marca
               </Link>
             </div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import Icon from "./Icon";
 
 /**
@@ -10,6 +10,8 @@ import Icon from "./Icon";
 export default function Drawer({ open, onClose, title, side = "right", children, footer, labelledBy }: { open: boolean; onClose: () => void; title: React.ReactNode; side?: "right" | "left"; children: React.ReactNode; footer?: React.ReactNode; labelledBy?: string }) {
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
+  const autoId = useId();
+  const titleId = labelledBy ?? `${autoId}-t`;
 
   useEffect(() => {
     if (!open) return;
@@ -51,12 +53,11 @@ export default function Drawer({ open, onClose, title, side = "right", children,
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={labelledBy}
-        aria-label={labelledBy ? undefined : typeof title === "string" ? title : undefined}
+        aria-labelledby={titleId}
         className={`fixed inset-y-0 z-90 flex w-full max-w-[28rem] flex-col bg-bg text-fg shadow-drawer ${side === "right" ? "right-0 animate-[slide-in-right_.4s_var(--ease-out)]" : "left-0 animate-[slide-in-left_.4s_var(--ease-out)]"}`}
       >
         <div className="flex h-header shrink-0 items-center justify-between border-b border-line px-5">
-          <div id={labelledBy} className="eyebrow text-fg">
+          <div id={titleId} className="eyebrow text-fg">
             {title}
           </div>
           <button type="button" onClick={onClose} className="-mr-2 grid size-11 place-items-center" aria-label="Fechar">

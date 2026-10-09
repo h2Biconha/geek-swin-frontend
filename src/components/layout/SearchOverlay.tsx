@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { asset, brl } from "@/lib/catalog";
 import { track } from "@/lib/analytics";
-import { BRAND } from "@/lib/brand";
 import { searchCatalog, SEARCH_SUGGESTIONS, type SearchResults } from "@/lib/search";
 import { closeOverlay, overlay, openOverlay } from "@/lib/ui";
 import Icon from "../ui/Icon";
@@ -16,6 +16,15 @@ export default function SearchOverlay() {
   const [res, setRes] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  // Enter abre a lista completa na loja (/shop?q=), com filtros e ordenação
+  const submit = () => {
+    const t = q.trim();
+    if (!t) return;
+    closeOverlay();
+    router.push(`/shop?q=${encodeURIComponent(t)}`);
+    setTimeout(() => window.dispatchEvent(new Event("gs:query")), 30);
+  };
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
@@ -32,11 +41,14 @@ export default function SearchOverlay() {
 
   useEffect(() => {
     if (!open) return;
+    // devolve o foco para quem abriu a busca (botão do header ou atalho)
+    const opener = document.activeElement as HTMLElement | null;
     const html = document.documentElement;
     html.style.overflow = "hidden";
     setTimeout(() => input.current?.focus(), 20);
     return () => {
       html.style.overflow = "";
+      if (opener && opener !== document.body && document.contains(opener)) opener.focus();
     };
   }, [open]);
 
@@ -48,7 +60,7 @@ export default function SearchOverlay() {
       if (!alive) return;
       setRes(r);
       setLoading(false);
-      track("search", { q });
+      track("search", { search_term: q.trim().slice(0, 60) });
     }, 140);
     return () => {
       alive = false;
@@ -79,9 +91,10 @@ export default function SearchOverlay() {
                 setLoading(!!e.target.value.trim());
                 if (!e.target.value.trim()) setRes(null);
               }}
-              placeholder={`Search ${BRAND.name}`}
+              placeholder="Buscar peças e drops"
               autoComplete="off"
               enterKeyHint="search"
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), submit())}
               className="font-display h-20 min-w-0 flex-1 bg-transparent text-[clamp(1.75rem,5vw,3.5rem)] placeholder:text-muted/60 focus:outline-none"
             />
             <button type="button" onClick={closeOverlay} className="grid size-11 shrink-0 place-items-center" aria-label="Fechar busca">
@@ -92,7 +105,7 @@ export default function SearchOverlay() {
           <div aria-live="polite" className="pt-8">
             {!term && (
               <div>
-                <p className="eyebrow text-muted">Mais buscados</p>
+                <p className="eyebrow text-muted">Sugestões</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {SEARCH_SUGGESTIONS.map((s) => (
                     <button key={s} type="button" onClick={() => (setQ(s), setLoading(true))} className="btn btn-secondary btn-sm">
@@ -117,9 +130,9 @@ export default function SearchOverlay() {
             {term && !loading && empty && (
               <div className="py-6">
                 <p className="font-display text-d4">Nada com “{term}”.</p>
-                <p className="mt-3 text-muted">Tenta “hoodie”, “cargo” ou “drop 001”. Ou veja tudo que existe.</p>
+                <p className="mt-3 text-muted">Tente “hoodie”, “cargo” ou “drop 001”. Ou veja todas as peças.</p>
                 <Link href="/shop" onClick={closeOverlay} className="btn btn-primary mt-6">
-                  Ver o shop
+                  Ver a loja
                 </Link>
               </div>
             )}
@@ -127,7 +140,12 @@ export default function SearchOverlay() {
             {term && !loading && res && !empty && (
               <div className="grid gap-10 lg:grid-cols-[1fr_18rem]">
                 <section aria-label="Produtos">
-                  <p className="eyebrow text-muted">Produtos · {res.products.length}</p>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <p className="eyebrow text-muted">Peças · {res.products.length}</p>
+                    <Link href={`/shop?q=${encodeURIComponent(term)}`} onClick={closeOverlay} className="eyebrow link-u">
+                      Ver todos os resultados
+                    </Link>
+                  </div>
                   <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 xl:grid-cols-4">
                     {res.products.map((p) => (
                       <li key={p.slug}>

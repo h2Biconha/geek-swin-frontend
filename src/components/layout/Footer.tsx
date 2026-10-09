@@ -2,18 +2,20 @@ import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 import { CATEGORIES, SITE } from "@/lib/catalog";
 import Lobby from "../sections/Lobby";
+import ConsentLink from "./ConsentLink";
 
 const COLS: [string, [string, string][]][] = [
-  ["Shop", [["Tudo", "/shop"], ...CATEGORIES.map((c) => [c.name, `/shop?categoria=${c.slug}`] as [string, string])]],
-  ["Marca", [["Drops", "/drops"], ["Archive", "/drops#archive"], ["About", "/about"], ["Members", "/members"]]],
+  ["Loja", [["Tudo", "/shop"], ...CATEGORIES.map((c) => [c.name, `/shop?categoria=${c.slug}`] as [string, string])]],
+  ["Marca", [["Drops", "/drops"], ["Arquivo", "/drops#arquivo"], ["Sobre", "/about"], ["Lista do drop", "/#lista"]]],
   ["Ajuda", [["Envio e prazos", "/help#envio"], ["Trocas e devoluções", "/help#trocas"], ["Pré-venda", "/help#pre-venda"], ["Contato", "/help#contato"]]],
+  ["Legal", [["Privacidade", "/privacy"], ["Termos de uso", "/terms"]]],
 ];
 
 export default function Footer() {
   return (
     <footer className="theme-dark">
       <Lobby />
-      <div className="wrap grid gap-10 border-t border-line pt-12 pb-10 sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_1.2fr]">
+      <div className="wrap grid gap-10 border-t border-line pt-12 pb-10 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_1.2fr]">
         {COLS.map(([t, links]) => (
           <nav key={t} aria-label={t}>
             <p className="eyebrow text-muted">{t}</p>
@@ -33,7 +35,7 @@ export default function Footer() {
           <a href={`https://instagram.com/${BRAND.instagram}`} target="_blank" rel="noopener noreferrer" className="font-display mt-4 inline-block text-d4 hover:text-accent-fg">
             @{BRAND.instagram}
           </a>
-          <p className="mt-3 max-w-[30ch] text-small text-muted">Marque a gente usando a peça. As melhores fotos entram no site.</p>
+          <p className="mt-3 max-w-[30ch] text-small text-muted">Marque a gente usando a peça.</p>
         </div>
       </div>
       <div className="wrap overflow-hidden" aria-hidden>
@@ -44,7 +46,8 @@ export default function Footer() {
         <p>
           © {new Date().getFullYear()} {BRAND.name} · {BRAND.cnpj ? `CNPJ ${BRAND.cnpj}` : "CNPJ a definir"}
         </p>
-        <p>Pix · Cartão em até 6x · Boleto</p>
+        <p>Pix · Cartão</p>
+        <ConsentLink />
         {SITE.preview && <p className="text-fg">Prévia · dados de exemplo</p>}
       </div>
     </footer>

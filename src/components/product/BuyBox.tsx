@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { cart } from "@/lib/cart";
 import { BRAND } from "@/lib/brand";
-import { brl, categoryName, dateLabel, dropTitle, FREE_SHIPPING_FROM, shipsLabel, timeLabel, type Product } from "@/lib/catalog";
-import { track } from "@/lib/analytics";
+import { favFor, favSizes } from "@/lib/account";
+import { brl, categoryName, COMMERCE, dateLabel, dropTitle, FREE_SHIPPING_FROM, shipsLabel, sizeOut, SPECS_CONFIRMED, timeLabel, type Product } from "@/lib/catalog";
+import { itemPayload, track } from "@/lib/analytics";
 import Accordion from "../ui/Accordion";
 import Countdown from "../ui/Countdown";
 import Icon from "../ui/Icon";
@@ -18,15 +19,20 @@ import WishlistButton from "./WishlistButton";
 import { useAvailability } from "./status";
 
 export default function BuyBox({ product: p }: { product: Product }) {
-  const { status, phase, drop } = useAvailability(p);
-  const [size, setSize] = useState<string | null>(p.sizes.length === 1 && !p.soldOut.includes(p.sizes[0]) ? p.sizes[0] : null);
+  const { status, phase, drop, inv } = useAvailability(p);
+  const soldOut = p.sizes.filter((s) => sizeOut(inv, s));
+  const [picked, setSize] = useState<string | null>(null);
+  // peça de tamanho único já vem escolhida; senão, o tamanho salvo em "Minha conta > Tamanhos" (se existir e não estiver esgotado)
+  const fav = favFor(p.sizeTable, favSizes.use());
+  const preset = p.sizes.length === 1 ? p.sizes[0] : fav && p.sizes.includes(fav) && !soldOut.includes(fav) ? fav : null;
+  const size = picked ?? preset;
   const [err, setErr] = useState(false);
   const [added, setAdded] = useState(false);
   const [guide, setGuide] = useState(false);
   const [showBar, setShowBar] = useState(false);
   const cta = useRef<HTMLDivElement>(null);
 
-  useEffect(() => track("view_item", { slug: p.slug, value: p.price }), [p.slug, p.price]);
+  useEffect(() => track("view_item", itemPayload([{ slug: p.slug, qty: 1 }])), [p.slug]);
   // barra fixa de compra no celular quando o botão principal sai da tela
   useEffect(() => {
     const el = cta.current;
@@ -36,7 +42,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
     return () => io.disconnect();
   }, []);
 
-  const sizeOut = size != null && p.soldOut.includes(size);
+  const chosenOut = size != null && soldOut.includes(size);
   const buyable = status === "available" || status === "low";
   const add = () => {
     if (!size) {
@@ -44,7 +50,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
       document.getElementById("size-block")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    if (sizeOut) return;
+    if (chosenOut) return;
     cart.add(p.slug, size);
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
@@ -67,12 +73,13 @@ export default function BuyBox({ product: p }: { product: Product }) {
         <h1 className="font-display mt-4 text-d3">{p.name}</h1>
         <p className="mt-3 text-small text-muted">
           {p.color} · {p.specs}
+          {!SPECS_CONFIRMED && " (em validação)"}
         </p>
       </div>
 
       <Price product={p} size="lg" showInstallments />
 
-      {p.edition != null && status !== "coming-soon" && <StockMeter product={p} />}
+      {p.edition != null && status !== "coming-soon" && <StockMeter product={p} inv={inv} />}
 
       {phase === "presale" && buyable && drop?.shipsFrom && drop.opensAtUTC && (
         <p className="border-l-2 border-accent pl-4 text-small text-muted">
@@ -99,7 +106,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
               <span className="link-u">Guia de tamanhos</span>
             </button>
           </div>
-          <SizeSelector sizes={p.sizes} soldOut={p.soldOut} value={size} onChange={(s) => (setSize(s), setErr(false))} error={err} />
+          <SizeSelector sizes={p.sizes} soldOut={soldOut} value={size} onChange={(s) => (setSize(s), setErr(false))} error={err} />
           {err && (
             <p id="size-error" role="alert" className="field-error">
               Escolha um tamanho primeiro.
@@ -111,13 +118,13 @@ export default function BuyBox({ product: p }: { product: Product }) {
       <div ref={cta} className="flex flex-col gap-3">
         {status === "sold-out" ? (
           <>
-            <div className="flex min-h-15 items-center justify-center border border-line-strong font-mono text-label font-bold tracking-[0.14em] uppercase">Sold out · no arquivo</div>
-            <p className="text-small text-muted">{p.drop ? "Peça de drop não tem reposição. Ela fica no arquivo como parte da história da marca." : "Esgotou. A linha Core volta ao estoque."}</p>
+            <div className="flex min-h-15 items-center justify-center border border-line-strong font-mono text-label font-bold tracking-[0.14em] uppercase">Esgotado · no arquivo</div>
+            <p className="text-small text-muted">{p.drop ? "Peça de drop não tem reposição. Ela fica no arquivo como parte da história da marca." : "Esgotou por enquanto. Deixe seu e-mail para saber quando voltar."}</p>
             {!p.drop && <NotifyMe product={p.slug} />}
           </>
         ) : status === "coming-soon" ? (
           <NotifyMe product={p.slug} source="drop-abertura" label="Me avise quando abrir" />
-        ) : sizeOut ? (
+        ) : chosenOut ? (
           <NotifyMe product={p.slug} size={size} label={p.drop ? "Tamanho esgotado. Me avise se liberar" : "Me avise quando voltar"} />
         ) : (
           <div className="flex gap-2">
@@ -139,13 +146,13 @@ export default function BuyBox({ product: p }: { product: Product }) {
 
       <ul className="grid gap-3 text-small text-muted">
         <li className="flex items-center gap-3">
-          <Icon name="truck" size={18} /> Frete grátis acima de {brl(FREE_SHIPPING_FROM)}
+          <Icon name="truck" size={18} /> Frete econômico grátis acima de {brl(FREE_SHIPPING_FROM)}
         </li>
         <li className="flex items-center gap-3">
-          <Icon name="refresh" size={18} /> Primeira troca por nossa conta · 7 dias para desistir
+          <Icon name="refresh" size={18} /> Primeira troca de tamanho por nossa conta · 7 dias para desistir
         </li>
         <li className="flex items-center gap-3">
-          <Icon name="lock" size={18} /> Pagamento seguro · Pix, cartão em 6x e boleto
+          <Icon name="lock" size={18} /> Pagamento no Mercado Pago · Pix ou cartão
         </li>
       </ul>
 
@@ -156,6 +163,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
             title: "Tecido e construção",
             content: (
               <ul className="grid gap-2">
+                {!SPECS_CONFIRMED && <li className="text-small text-fg">Ficha em validação com a produção: composição e gramatura podem mudar antes do envio.</li>}
                 {p.fabric.map((f) => (
                   <li key={f} className="flex gap-3">
                     <span aria-hidden className="mt-2.5 h-px w-3 shrink-0 bg-current" />
@@ -180,7 +188,7 @@ export default function BuyBox({ product: p }: { product: Product }) {
             title: "Envio e trocas",
             content: (
               <p>
-                Postagem em até 2 dias úteis (pré-venda: a partir da data informada). Frete grátis acima de {brl(FREE_SHIPPING_FROM)}. A primeira troca de tamanho é por conta da {BRAND.name}, e você tem 7 dias depois de receber para desistir da compra.{" "}
+                Postagem em até {COMMERCE.handlingDays} dias úteis depois do pagamento (pré-venda: a partir da data informada). Frete econômico grátis acima de {brl(FREE_SHIPPING_FROM)}. A primeira troca de tamanho, em até {COMMERCE.exchangeDays} dias, é por conta da {BRAND.name}, e você tem 7 dias depois de receber para desistir da compra.{" "}
                 <Link href="/help" className="link-u text-fg">
                   Tudo sobre envio e trocas
                 </Link>

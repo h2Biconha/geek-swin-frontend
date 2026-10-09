@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { asset, dateLabel, dropProducts, dropTitle, editionLeft, editionTotal, getProduct, PHASE_LABEL, shipsLabel, timeLabel, type Drop } from "@/lib/catalog";
+import { useInventoryMap } from "@/lib/inventory";
 import { useDropPhase } from "@/lib/time";
 import NextDrop from "../drop/NextDrop";
 import EditorialGrid from "../product/EditorialGrid";
@@ -14,7 +15,7 @@ export default function DropView({ drop }: { drop: Drop }) {
   const phase = useDropPhase(drop);
   const items = dropProducts(drop);
   const total = editionTotal(drop);
-  const left = editionLeft(drop);
+  const left = editionLeft(drop, useInventoryMap());
   const soon = phase === "coming-soon";
 
   return (
@@ -45,8 +46,8 @@ export default function DropView({ drop }: { drop: Drop }) {
           <div className="grid gap-6 border-t border-line pt-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ["Abertura", drop.opensAtUTC ? `${dateLabel(drop.opensAtUTC)} · ${timeLabel(drop.opensAtUTC)}` : "????"],
-              ["Produzidas", total ? `${total} peças` : "????"],
-              ["Restantes", total ? `${left}/${total}` : "????"],
+              ["Tiragem", total ? `${total} peças` : "????"],
+              left != null && total ? ["Disponíveis", `${left}/${total}`] : ["Reposição", total ? "Nenhuma" : "????"],
               ["Envio", drop.shipsFrom ? `a partir de ${shipsLabel(drop.shipsFrom)}` : "????"],
             ].map(([k, v]) => (
               <div key={k}>

@@ -3,12 +3,12 @@ import { asset, COMMUNITY } from "@/lib/catalog";
 import Icon from "../ui/Icon";
 
 /**
- * Grid da comunidade. Hoje não há fotos de clientes, então os espaços aparecem como "slots vazios"
- * (honesto, e convida a marcar a marca). Quando COMMUNITY.posts tiver fotos, elas ocupam os slots.
+ * Grid da comunidade. Só aparece quando COMMUNITY.posts tiver fotos reais (com autorização de quem aparece).
  * Integração futura: Instagram Graph API (ver BACKEND.md > Instagram).
  */
 export default function SeenInTheWild() {
   const posts = COMMUNITY.posts;
+  if (!posts.length) return null; // sem fotos reais de clientes, a seção não aparece
   const slots = Array.from({ length: 5 }, (_, i) => posts[i] ?? null);
   return (
     <section aria-labelledby="wild-t" className="wrap py-section">
@@ -16,7 +16,7 @@ export default function SeenInTheWild() {
         <div>
           <p className="eyebrow text-muted">Comunidade</p>
           <h2 id="wild-t" className="font-display mt-4 text-d2">
-            Seen in the wild
+            Na rua
           </h2>
         </div>
         <a href={`https://instagram.com/${BRAND.instagram}`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
@@ -34,7 +34,7 @@ export default function SeenInTheWild() {
           <span className="eyebrow text-accent-fg">Player 1</span>
           <span>
             <span className="font-display block text-d3 transition-colors group-hover:text-accent-fg">Sua foto aqui.</span>
-            <span className="mt-4 block max-w-[30ch] text-muted">Vestiu, marcou @{BRAND.instagram}. As melhores entram no site e no arquivo da marca.</span>
+            <span className="mt-4 block max-w-[30ch] text-muted">Vestiu? Marque @{BRAND.instagram}.</span>
           </span>
         </a>
         {slots.slice(0, 4).map((p, i) =>

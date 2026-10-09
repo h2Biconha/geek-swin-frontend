@@ -26,12 +26,12 @@ export default function DropsView() {
 
       <WhyDrops />
 
-      <section id="archive" aria-labelledby="archive-t" className="wrap py-section">
+      <section id="arquivo" aria-labelledby="arquivo-t" className="wrap py-section">
         <div className="flex flex-wrap items-end justify-between gap-6" data-reveal>
           <div>
-            <p className="eyebrow text-muted">Sold out</p>
-            <h2 id="archive-t" className="font-display mt-4 text-d2">
-              Archive
+            <p className="eyebrow text-muted">Esgotados</p>
+            <h2 id="arquivo-t" className="font-display mt-4 text-d2">
+              Arquivo
             </h2>
           </div>
           <p className="max-w-[40ch] text-muted">Peças esgotadas não somem. Ficam aqui com o número da tiragem, para todo mundo ver o que já existiu.</p>

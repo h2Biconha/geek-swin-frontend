@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { dropPhase, type Drop } from "./catalog";
+import { useInventoryMap } from "./inventory";
 
 /**
  * Relógio compartilhado. As páginas são geradas no build, então no HTML (e na hidratação) vale a hora
@@ -49,7 +50,11 @@ export function useNow(ms = 1000) {
   return useSyncExternalStore(c.subscribe, c.get, serverNow);
 }
 
-export const useDropPhase = (d: Drop) => dropPhase(d, useNow(30_000));
+export function useDropPhase(d: Drop) {
+  const now = useNow(30_000);
+  const stock = useInventoryMap();
+  return dropPhase(d, now, stock ?? undefined);
+}
 
 export function splitCountdown(target: number, now: number) {
   const t = Math.max(0, target - now);

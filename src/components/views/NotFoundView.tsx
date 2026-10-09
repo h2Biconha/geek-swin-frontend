@@ -7,19 +7,19 @@ export default function NotFoundView() {
         404
       </span>
       <div className="wrap relative py-20">
-        <p className="eyebrow text-accent-fg">Erro 404</p>
+        <p className="eyebrow text-accent-fg">Erro 404 · Game over</p>
         <h1 className="font-display mt-5 text-d1">
-          Player
+          Página
           <br />
-          not found<span className="animate-blink text-accent-fg">_</span>
+          não encontrada<span className="animate-blink text-accent-fg">_</span>
         </h1>
-        <p className="mt-8 max-w-[34ch] text-[1.25rem] text-muted">Você se perdeu no mapa. Essa página não existe, ou já foi para o arquivo.</p>
+        <p className="mt-8 max-w-[34ch] text-[1.25rem] text-muted">Você saiu do mapa. Esse endereço não existe ou mudou de lugar.</p>
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href="/" className="btn btn-primary btn-lg">
-            Voltar para o lobby
+            Voltar ao início
           </Link>
           <Link href="/shop" className="btn btn-secondary btn-lg">
-            Ir para o shop
+            Ir para a loja
           </Link>
         </div>
       </div>

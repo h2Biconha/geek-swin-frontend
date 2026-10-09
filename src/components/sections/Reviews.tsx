@@ -18,38 +18,31 @@ export function ReviewCard({ r }: { r: Review }) {
   );
 }
 
-/** Avaliações reais (compra verificada). Vazio = estado honesto, sem avaliação inventada. */
+/**
+ * Avaliações reais (compra verificada). Sem avaliação, a seção não aparece: nada de estrela vazia
+ * nem promessa de convite para avaliar enquanto esse fluxo não existir (ver BACKEND.md > Avaliações).
+ */
 export default function Reviews({ product }: { product?: string }) {
   const list = product ? reviewsFor(product) : REVIEWS;
-  const avg = list.length ? list.reduce((s, r) => s + r.rating, 0) / list.length : 0;
+  if (!list.length) return null;
+  const avg = list.reduce((s, r) => s + r.rating, 0) / list.length;
   return (
     <section aria-labelledby="reviews-t" className="wrap py-section">
       <div className="grid gap-10 lg:grid-cols-[1fr_2fr]">
         <div data-reveal>
-          <p className="eyebrow text-muted">Reviews</p>
+          <p className="eyebrow text-muted">Avaliações</p>
           <h2 id="reviews-t" className="font-display mt-4 text-d3">
-            {list.length ? `${avg.toFixed(1)} / 5` : "Só compra verificada."}
+            {avg.toFixed(1).replace(".", ",")} / 5
           </h2>
           <p className="mt-4 max-w-[34ch] text-muted">
-            {list.length ? `${list.length} avaliações de quem recebeu a peça.` : "As primeiras avaliações chegam depois das entregas do Drop 001. Aqui não entra review inventada."}
+            {list.length} {list.length === 1 ? "avaliação" : "avaliações"} de quem recebeu a peça.
           </p>
         </div>
-        {list.length ? (
-          <div className="grid gap-8 md:grid-cols-2">
-            {list.slice(0, 6).map((r) => (
-              <ReviewCard key={r.id} r={r} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid content-start gap-px border border-dashed border-line-strong p-6 sm:p-8" data-reveal>
-            <div className="flex gap-0.5 text-line-strong" aria-hidden>
-              {Array.from({ length: 5 }, (_, i) => (
-                <Icon key={i} name="star" size={18} />
-              ))}
-            </div>
-            <p className="mt-4 text-muted">Comprou? Depois da entrega você recebe um link para avaliar. Avaliação com foto ganha destaque.</p>
-          </div>
-        )}
+        <div className="grid gap-8 md:grid-cols-2">
+          {list.slice(0, 6).map((r) => (
+            <ReviewCard key={r.id} r={r} />
+          ))}
+        </div>
       </div>
     </section>
   );

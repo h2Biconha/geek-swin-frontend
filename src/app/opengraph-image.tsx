@@ -22,7 +22,7 @@ export default function OG() {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 30 }}>
           <span>{BRAND.name}</span>
-          <span style={{ color: "#a6a6ff" }}>Não é merch. É uniforme.</span>
+          <span style={{ color: "#a6a6ff" }}>Não é merch. É cultura.</span>
         </div>
       </div>
     ),

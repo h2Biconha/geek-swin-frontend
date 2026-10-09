@@ -13,23 +13,29 @@ export type Product = {
   name: string;
   category: string;
   price: number;
+  /** preço "de" só quando a peça foi vendida por esse valor antes (nunca preço inflado) */
   compareAt: number | null;
   specs: string;
   color: string;
   drop: string | null; // número do drop ("001") ou null para a linha Core
-  edition: number | null; // tiragem numerada
-  stockLeft: number | null; // null = não exibimos contador
+  edition: number | null; // tiragem numerada (teto de vendas, controlado pelo servidor)
   sizes: string[];
-  soldOut: string[];
   sizeTable: string;
   addedAt: string;
-  rank: number; // ordem de "mais vendidos" (virá dos pedidos pagos)
+  rank: number; // ordem editorial ("destaques"); "mais vendidos" só com dados de pedidos
   featured: boolean;
   media: Media[];
   description: string;
   fabric: string[];
   fit: string;
 };
+
+/**
+ * Estoque real, vindo do servidor (/api/stock). Não existe no catálogo: sem servidor (prévia),
+ * o site não mostra contador nenhum.
+ * sizes[tamanho]: unidades disponíveis, 0 = esgotado, null = produção sob demanda (sem limite).
+ */
+export type Inventory = { sizes: Record<string, number | null>; editionLeft: number | null };
 
 export type Look = { n: string; name: string; products: string[]; text: string };
 
@@ -51,7 +57,8 @@ export type Drop = {
   gallery: Media[];
   video: Media | null;
   looks: Look[];
-  status?: "sold-out" | "closed"; // força um status (ex.: encerrado manualmente)
+  /** força um status pelo catálogo (decisão administrativa): encerrar, arquivar ou esgotar um drop */
+  status?: "sold-out" | "archived";
 };
 
 export type Review = { id: string; product: string; rating: number; text: string; name: string; verified: boolean; date: string; size?: string };
@@ -64,7 +71,9 @@ export const CATEGORIES = data.categories;
 export const SIZE_TABLES = data.sizeTables as Record<string, SizeTable>;
 export const REVIEWS = data.reviews as Review[];
 export const COMMUNITY = data.community as { instagram: string; posts: Media[] };
+export const COMMERCE = data.commerce;
 export const { freeShippingFrom: FREE_SHIPPING_FROM, installments: INSTALLMENTS, pixDiscount: PIX_DISCOUNT } = data.commerce;
+export const SPECS_CONFIRMED = data.site.specsConfirmed;
 
 export const getProduct = (slug: string) => PRODUCTS.find((p) => p.slug === slug);
 export const getDrop = (slugOrNumber: string | null) => DROPS.find((d) => d.slug === slugOrNumber || d.number === slugOrNumber);
@@ -74,7 +83,13 @@ export const coreProducts = () => PRODUCTS.filter((p) => !p.drop);
 export const reviewsFor = (slug: string) => REVIEWS.filter((r) => r.product === slug);
 /** total da tiragem numerada do drop (calculado, nunca digitado no texto) */
 export const editionTotal = (d: Drop) => dropProducts(d).reduce((s, p) => s + (p.edition ?? 0), 0);
-export const editionLeft = (d: Drop) => dropProducts(d).reduce((s, p) => s + (p.stockLeft ?? 0), 0);
+/** peças numeradas ainda disponíveis no drop, só com estoque real (null = desconhecido) */
+export function editionLeft(d: Drop, stock?: Record<string, Inventory> | null): number | null {
+  if (!stock) return null;
+  const numbered = dropProducts(d).filter((p) => p.edition != null);
+  if (!numbered.length || numbered.some((p) => stock[p.slug]?.editionLeft == null)) return null;
+  return numbered.reduce((s, p) => s + (stock[p.slug].editionLeft ?? 0), 0);
+}
 
 /* ---------- preço ---------- */
 export const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -90,35 +105,58 @@ export type Availability = "available" | "low" | "sold-out" | "coming-soon";
 const LOW_ABS = 20;
 const LOW_PCT = 0.15;
 
-/** Disponibilidade do produto. `dropOpen` vem do status do drop (ver drops.ts). */
-export function availability(p: Product, dropState?: DropPhase): Availability {
-  if (dropState === "coming-soon") return "coming-soon";
-  const allSizesOut = p.sizes.every((s) => p.soldOut.includes(s));
-  if (allSizesOut || p.stockLeft === 0 || dropState === "sold-out" || dropState === "closed") return "sold-out";
-  if (p.stockLeft != null && p.edition && (p.stockLeft <= LOW_ABS || p.stockLeft / p.edition <= LOW_PCT)) return "low";
+/** tamanho esgotado de verdade (só com estoque do servidor) */
+export const sizeOut = (inv: Inventory | undefined, size: string) => inv?.sizes[size] === 0;
+/** unidades que ainda podem ser vendidas desse tamanho (null = sem limite conhecido) */
+export function sizeLeft(p: Product, inv: Inventory | undefined, size: string): number | null {
+  if (!inv) return null;
+  const s = inv.sizes[size];
+  const e = inv.editionLeft;
+  if (s == null) return e;
+  return e == null ? s : Math.min(s, e);
+}
+export const productSoldOut = (p: Product, inv?: Inventory) => !!inv && (inv.editionLeft === 0 || p.sizes.every((s) => inv.sizes[s] === 0));
+
+/** Disponibilidade da peça a partir da fase do drop e do estoque real (quando existe). */
+export function availability(p: Product, phase?: DropPhase, inv?: Inventory): Availability {
+  if (phase === "coming-soon" || phase === "upcoming") return "coming-soon";
+  if (phase === "sold-out" || phase === "archived" || productSoldOut(p, inv)) return "sold-out";
+  if (inv?.editionLeft != null && p.edition && (inv.editionLeft <= LOW_ABS || inv.editionLeft / p.edition <= LOW_PCT)) return "low";
   return "available";
 }
+/** dá para comprar agora? (pré-venda e drop aberto) */
+export const isPurchasablePhase = (phase?: DropPhase) => phase === undefined || phase === "presale" || phase === "live";
 
 /* ---------- fase do drop (pura, recebe o "agora") ---------- */
-export type DropPhase = "coming-soon" | "presale" | "upcoming" | "live" | "sold-out" | "closed";
+export type DropPhase = "coming-soon" | "presale" | "upcoming" | "live" | "sold-out" | "archived";
 
-export function dropPhase(d: Drop, now: number): DropPhase {
+/**
+ * Regras de transição, em ordem:
+ * 1. status forçado no catálogo (decisão administrativa);
+ * 2. fechado por data (closesAtUTC) → archived;
+ * 3. sem data ou sem peças → coming-soon;
+ * 4. todas as peças esgotadas pelo estoque real → sold-out (vale também na pré-venda);
+ * 5. antes da abertura → presale (se o drop tem pré-venda) ou upcoming;
+ * 6. senão → live.
+ */
+export function dropPhase(d: Drop, now: number, stock?: Record<string, Inventory>): DropPhase {
   if (d.status) return d.status;
   const items = dropProducts(d);
-  if (items.length && items.every((p) => p.stockLeft === 0 || p.sizes.every((s) => p.soldOut.includes(s)))) return "sold-out";
-  if (d.closesAtUTC && now >= Date.parse(d.closesAtUTC)) return "closed";
+  if (d.closesAtUTC && now >= Date.parse(d.closesAtUTC)) return "archived";
   if (!d.opensAtUTC || !items.length) return "coming-soon";
+  const soldOut = !!stock && items.every((p) => productSoldOut(p, stock[p.slug]));
+  if (soldOut) return "sold-out";
   if (now < Date.parse(d.opensAtUTC)) return d.presale ? "presale" : "upcoming";
   return "live";
 }
 
 export const PHASE_LABEL: Record<DropPhase, string> = {
-  "coming-soon": "COMING SOON",
+  "coming-soon": "EM BREVE",
   presale: "PRÉ-VENDA",
   upcoming: "PRÓXIMO DROP",
   live: "DROP AO VIVO",
-  "sold-out": "SOLD OUT",
-  closed: "DROP ENCERRADO",
+  "sold-out": "ESGOTADO",
+  archived: "ARQUIVO",
 };
 
 /** datas sempre no horário de Brasília */

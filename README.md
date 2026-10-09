@@ -1,102 +1,86 @@
 # GEEK SWIM · Streetwear nascido da cultura gamer
 
-Front-end da loja da GEEK SWIM, organizado em drops numerados. A loja tem uma página editorial por produto, checkout em 4 etapas, wishlist, área de conta e GEEK LEVEL.
-**O front está pronto. O back-end ainda não existe.** Tudo o que está simulado aparece na própria interface como "Prévia" e está listado abaixo. Os contratos para o back estão em [BACKEND.md](BACKEND.md).
+Loja da GEEK SWIM, organizada em drops numerados. Next.js com front e back-end no mesmo projeto: catálogo, drops com fases reais, bag, checkout com Pix e cartão pelo Mercado Pago, pedidos, estoque com reserva, conta por link mágico, lista de avisos, painel e LGPD.
+
+**Hoje o site está em modo prévia**: nada é salvo nem cobrado, e a interface diz isso. Para ligar a loja, veja [BACKEND.md](BACKEND.md).
 
 ## Rodar
 
-Precisa de Node 20 ou mais novo.
+Precisa de Node 22.12 ou mais novo.
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
-npm run build        # build de produção (27 páginas estáticas)
-npm run lint
-npm run art          # regenera os desenhos técnicos das peças em public/art/
+npm run dev          # http://localhost:3000 (modo prévia)
+npm run check        # lint + tipos + testes + build
+npm test             # unidade e integração
+npm run e2e          # navegador (Playwright), sobe servidor de teste na porta 3100
+npm run db:migrate   # aplica migrações no banco de DATABASE_URL (ou no PGlite local)
 npm run standalone   # gera standalone-dist/ABRIR-GEEK-SWIM.html (abre com duplo clique, sem servidor)
+npm run art          # regenera os desenhos técnicos das peças em public/art/
 ```
 
-Copie `.env.example` para `.env.local` só quando for ligar algum serviço. Sem nenhuma variável, o site funciona inteiro em modo prévia.
+Para testar compras sem cobrar nada: `cp .env.example .env.local`, troque para `NEXT_PUBLIC_STORE_MODE=test` e rode `npm run dev`. O pagamento de teste é simulado na página do pedido.
 
 ## Stack
 
 | | |
 |---|---|
 | Framework | Next.js 16 (App Router) + React 19 + TypeScript |
-| Estilo | Tailwind CSS 4 com tokens em `src/app/globals.css` (sem arquivo de config) |
-| Animação | Só CSS (transições, keyframes e um IntersectionObserver). Respeita `prefers-reduced-motion` |
+| Estilo | Tailwind CSS 4 com tokens em `src/app/globals.css` |
+| Movimento | Só CSS (transições e animação ligada à rolagem). Respeita `prefers-reduced-motion` |
 | Fontes | Archivo variável (peso e largura) + JetBrains Mono, via `next/font` |
-| Dados | `src/lib/catalog.json`, a fonte única até existir API |
+| Dados | `src/lib/catalog.json` (catálogo e regras comerciais) + Postgres (pedidos, estoque, lista) |
+| Pagamento | Mercado Pago (Pix pela API de Orders, cartão pelo Checkout Pro), REST sem SDK |
+| Testes | Vitest (unidade e integração com PGlite) + Playwright + axe-core |
 
 ## Rotas
 
 | Rota | O que é |
 |---|---|
-| `/` | Home: hero do drop, peças, como funcionam os drops, próximo drop, members, comunidade, lobby |
-| `/shop` | Todas as peças. Filtros (drop, categoria, tamanho, preço, disponível) e ordenação na URL, sem recarregar |
-| `/product/[slug]` | Página editorial da peça: galeria com zoom, tamanhos, guia de medidas, pré-venda, avisar-me |
-| `/drops` | Linha do tempo dos drops e arquivo das peças esgotadas |
-| `/drops/[slug]` | Landing do drop (`001-insert-coin`, `002`) |
-| `/wishlist` | Peças salvas no navegador |
-| `/account` | MINHA GEEK SWIM: login (prévia) e conta de exemplo com GEEK LEVEL |
-| `/members` | Programa de membros e níveis |
-| `/about` | Manifesto |
-| `/help` | Envio, trocas, pré-venda, pagamento e contato |
-| `/checkout` | Checkout em 4 etapas (dados, entrega, pagamento, revisão) |
-| 404 | "Player not found" |
+| `/` | Home: hero do drop, peças, manifesto, como funcionam os drops, linha Core, próximo drop |
+| `/shop` | Todas as peças. Busca (`?q=`), filtros e ordenação na URL |
+| `/product/[slug]` | Peça: galeria com zoom, tamanhos reais, guia de medidas, pré-venda, avise-me, barra fixa no celular |
+| `/drops` · `/drops/[slug]` | Linha do tempo, arquivo de esgotados e página de cada drop |
+| `/checkout` | Dados, entrega e pagamento (Pix ou cartão). Total sempre calculado no servidor |
+| `/order/[id]` | Status do pedido, Pix com QR e copia e cola, confirmação |
+| `/account` | Login por link no e-mail, pedidos, favoritos, tamanhos salvos |
+| `/wishlist` | Favoritos (no navegador) |
+| `/about` · `/help` | Manifesto · envio, trocas, pré-venda, pagamento e contato |
+| `/privacy` · `/terms` | Política de privacidade e termos (versão preliminar) |
+| `/unsubscribe` · `/admin` | Sair da lista · painel da loja |
 
-Os endereços antigos (`/loja`, `/produto/*`, `/sobre`, `/lookbook`, `/carrinho`) redirecionam para os novos em `next.config.ts`.
+Endereços antigos (`/loja`, `/produto/*`, `/sobre`, `/lookbook`, `/carrinho`, `/members`, `/arquivo`) redirecionam em `next.config.ts`.
 
 ## Estrutura
 
 ```
-src/app/                     rotas, metadata, sitemap, robots, imagem de compartilhamento
-src/app/api/                 subscribe e checkout (respondem 501 até o back existir)
-src/components/ui/           design system: botões, Modal, Drawer, Media, Countdown, Accordion...
-src/components/product/      card, grid, galeria, seletor de tamanho, guia de medidas, BuyBox
-src/components/drop/         hero, timeline, próximo drop, "por que drops"
-src/components/layout/       header, menu, busca, bag, rodapé, loading, aviso de drop
-src/components/views/        uma view por página (usadas pelo Next E pelo arquivo único)
-src/lib/catalog.json         peças, preços, estoque, tamanhos, drops, reviews, comunidade
-src/lib/catalog.ts           tipos e regras: preço, parcela, Pix, status de estoque, fase do drop
-src/lib/brand.ts             nome da marca e contatos (troque o nome aqui e muda no site todo)
-src/lib/commerce/            cliente do checkout, frete, cupom e adaptadores de pagamento (servidor)
-src/lib/cart.ts · wishlist.ts  bag e wishlist no navegador
-src/lib/subscribe.ts         lista de e-mail/WhatsApp (não conectada)
-src/lib/analytics.ts         eventos para GTM/Meta Pixel (só disparam se os IDs existirem)
-scripts/draw-flats.mjs       gera os desenhos técnicos das peças (SVG)
-scripts/build-standalone.mjs gera o arquivo único, com scripts/standalone/ (rota no hash)
-docs/                        auditoria e direção, lista de fotos
+src/app/                 rotas, metadata, sitemap, robots, imagem de compartilhamento
+src/app/api/             back-end (ver BACKEND.md)
+src/server/              regras do servidor: banco, estoque, pedidos, pagamento, e-mail, auth, segurança
+src/components/ui/       design system: botões, Modal, Drawer, Countdown, Accordion, Price, StockMeter...
+src/components/product/  card, grid, galeria, seletor de tamanho, guia de medidas, BuyBox
+src/components/drop/     hero, vitrine do drop, timeline, próximo drop, "por que drops"
+src/components/layout/   header, menu, busca, bag, rodapé, aviso de cookies
+src/components/views/    uma view por página (usadas pelo Next e pelo arquivo único)
+src/lib/catalog.*        catálogo, tipos e regras (fase do drop, disponibilidade, preço)
+src/lib/commerce/        preço puro (cliente e servidor), tipos e cliente da API de checkout
+src/lib/consent.ts       escolha de cookies; analytics.ts só envia evento com consentimento
+tests/                   unit/, integration/ (Vitest) e e2e/ (Playwright)
+docs/                    auditoria, decisões da reconstrução, lista de fotos
 ```
 
-## O que é prévia (mock)
+## Regras que não se quebram
 
-Nada disso finge funcionar. A interface avisa em cada ponto.
+- Nada de estoque, avaliação, foto de cliente, desconto "de/por" ou dado técnico inventado. Sem dado real, a interface mostra o estado vazio ou "em validação".
+- Preço, frete, cupom e estoque são decididos no servidor. O navegador só mostra.
+- Pedido só vira pago por confirmação do gateway (webhook + consulta). Nunca pelo retorno do navegador.
+- Nenhum script de terceiros antes do consentimento de cookies.
+- Cores só pelos tokens de `globals.css`; seções escuras usam `theme-dark`. Texto nunca menor que 11 px.
 
-| Item | Hoje | Para ligar |
-|---|---|---|
-| Catálogo, preço e estoque | `catalog.json` (estoque ilustrativo, `site.preview: true`) | API ou plataforma. Ver BACKEND.md > Catálogo e Estoque |
-| Lista (lobby, aviso de drop, avisar-me, members) | valida e diz "não conectado" | `NEXT_PUBLIC_SUBSCRIBE_URL` + rota `/api/subscribe` |
-| Checkout | modo demonstração: percorre as 4 etapas e não cobra nada | `NEXT_PUBLIC_CHECKOUT_URL` + `/api/checkout` + adaptador Mercado Pago ou Stripe |
-| Frete | valores de exemplo; CEP real via ViaCEP | `NEXT_PUBLIC_SHIPPING_URL` (Melhor Envio/Correios) |
-| Cupom | sempre recusa com aviso de prévia | validação no servidor |
-| Conta e GEEK LEVEL | conta de exemplo, login desligado | auth (link mágico por e-mail) + pedidos |
-| Reviews e fotos da comunidade | vazios, com estado honesto | só publicar avaliações e fotos reais e autorizadas |
-| Fotos das peças | desenhos técnicos em SVG | fotos reais, ver [docs/FOTOS.md](docs/FOTOS.md) |
-| CNPJ, WhatsApp, e-mail | `null` em `brand.ts` (o site esconde o que é nulo) | dados reais antes de vender |
+## Qualidade medida em 09/10/2026
 
-## Regras de design
-
-- Cores só pelos tokens de `globals.css` (`bg`, `fg`, `muted`, `line`, `accent`, `danger`...). Nada de hex solto no JSX.
-- O acento (Hyperlink Blue `#2E2EFF`) é para ação e estado. Em fundo escuro, texto usa `accent-fg` (`#A6A6FF`).
-- Seções escuras usam a classe `theme-dark`, que troca os tokens. Os componentes não precisam saber disso.
-- Texto pequeno: `text-micro` (11px), `text-label`, `text-small`. Nunca menos que 11px.
-- Números do catálogo (tiragem, restantes, desconto Pix, parcela) são calculados, nunca digitados em texto.
-- Nunca inventar estoque, avaliação, foto de cliente ou depoimento. Sem dado real, o estado vazio aparece.
-
-## Qualidade verificada
-
-- Build de produção sem erros, `eslint` e `tsc` limpos.
-- Sem rolagem horizontal em 375, 390, 430, 768, 1024, 1440 e 1920 px nas 13 páginas.
-- axe-core (WCAG 2.1 AA) sem violações.
-- Fluxos testados no celular: tamanho obrigatório, bag, guia de medidas, busca, menu, filtros, wishlist e checkout completo.
+- `eslint`, `tsc` e build de produção limpos.
+- 42 testes de unidade e integração e 28 testes de navegador passando (ver BACKEND.md > Testes).
+- axe-core (WCAG 2.0/2.1/2.2 A e AA) sem violações sérias em 13 páginas.
+- Sem rolagem horizontal em 375, 768, 1024, 1440 e 1920 px.
+- Lighthouse (laboratório, celular simulado, servidor local): ver [docs/03-RECONSTRUCAO.md](docs/03-RECONSTRUCAO.md#desempenho). Não é dado de usuários reais.

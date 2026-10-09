@@ -21,7 +21,7 @@ export default function ProductView({ product: p }: { product: Product }) {
   return (
     <>
       <div className="wrap pt-5 pb-section lg:pt-8">
-        <Breadcrumbs items={[["Shop", "/shop"], [categoryName(p.category), `/shop?categoria=${p.category}`], [p.name]]} />
+        <Breadcrumbs items={[["Loja", "/shop"], [categoryName(p.category), `/shop?categoria=${p.category}`], [p.name]]} />
         <div className="mt-5 grid grid-cols-1 gap-8 *:min-w-0 lg:mt-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(22rem,1fr)] lg:gap-12 xl:gap-20">
           <div className="-mx-gutter lg:mx-0">
             <ProductGallery product={p} />

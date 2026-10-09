@@ -1,9 +1,9 @@
 const STEPS = [
   ["Conceito", "Cada drop nasce de uma ideia da cultura digital. Não é coleção de estação, é capítulo."],
-  ["Quantidade", "Tiragem fechada antes de cortar o tecido. Cada peça sai numerada."],
+  ["Quantidade", "Tiragem definida antes da abertura e publicada na página do drop. Cada peça sai numerada."],
   ["Identidade", "Nome, número e história próprios. Você sabe de qual drop é a sua."],
-  ["Período", "Abre com hora marcada e fica no ar até acabar. Quem está na lista entra antes."],
-  ["Sold out", "Acabou, acabou. A peça vai para o arquivo e não volta. Por isso ela vale mais."],
+  ["Período", "Abre com hora marcada, no horário de Brasília, e fica no ar até acabar. Quem está na lista recebe o aviso."],
+  ["Esgotado", "Acabou, acabou. A peça vai para o arquivo e não volta."],
 ];
 
 export default function WhyDrops() {
@@ -14,9 +14,9 @@ export default function WhyDrops() {
           <div data-reveal>
             <p className="eyebrow text-muted">Como funciona</p>
             <h2 id="why-t" className="font-display mt-4 text-d2">
-              Why drops?
+              Por que drops?
             </h2>
-            <p className="mt-6 max-w-[34ch] text-[1.125rem] text-muted">A gente não faz estoque infinito. Faz poucas peças, bem feitas, e deixa acabar.</p>
+            <p className="mt-6 max-w-[34ch] text-[1.125rem] text-muted">Sem estoque infinito: poucas peças, numeradas, e quando acaba não volta.</p>
           </div>
           <ol className="border-t border-line-strong">
             {STEPS.map(([t, d], i) => (
